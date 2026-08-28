@@ -1,6 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { categories, getCategory, getCategoryProducts } from "../../store-data";
+import {
+  categories,
+  formatInr,
+  getCategory,
+  getCategoryProducts,
+} from "../../store-data";
 import { CategoryAddButton } from "./product-actions";
 import { StoreFooter, StoreHeader } from "../../storefront-context";
 
@@ -50,8 +55,8 @@ export default async function CategoryPage({
             <span>PRODUCTS & VARIETIES</span>
           </div>
           <p>
-            Each variety has its own description page with origin, pack details
-            and purchase controls.
+            Every variety has its own branded pack visual, description, origin
+            information and purchase controls.
           </p>
         </div>
         <div className="listingGrid">
@@ -60,24 +65,10 @@ export default async function CategoryPage({
               <Link
                 href={`/product/${product.slug}`}
                 className="listingImage"
-                style={{
-                  background: product.image
-                    ? "#f3eadc"
-                    : `color-mix(in srgb, ${product.accent} 24%, #f5ead5)`,
-                }}
+                style={{ background: "#f3eadc" }}
               >
-                {product.image ? (
-                  <img src={product.image} alt={product.name} />
-                ) : (
-                  <>
-                    <span>{product.emoji}</span>
-                    <small>
-                      K1 QUALITY
-                      <br />
-                      SELECTED
-                    </small>
-                  </>
-                )}
+                <span className="listingSaleBadge">50% OFF</span>
+                <img src={product.image} alt={`${product.name} K1 packaging`} />
                 <i>0{index + 1}</i>
               </Link>
               <p>{product.category}</p>
@@ -85,9 +76,10 @@ export default async function CategoryPage({
                 <h2>{product.name}</h2>
               </Link>
               <small>{product.short}</small>
-              <div>
-                <b>₹{product.price}</b>
-                <span>{product.weight}</span>
+              <div className="listingPrice">
+                <b>₹{formatInr(product.price)}</b>
+                <del>₹{formatInr(product.mrp)}</del>
+                <span>50% OFF · {product.weight}</span>
               </div>
               <CategoryAddButton product={product} />
             </article>

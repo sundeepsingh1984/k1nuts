@@ -79,7 +79,7 @@ const healthy: StoreProduct[] = [
     description:
       "A traditional blend of premium dry fruits, seeds and nuts with the richness of saffron. Naturally sweetened with dates, these jewel-like bites bring Kashmiri warmth to busy days.",
     short: "Saffron-infused date, nut and seed bites.",
-    price: 599,
+    price: 299.5,
     mrp: 599,
     weight: "250g",
     accent: "#5e3b78",
@@ -120,7 +120,7 @@ const healthy: StoreProduct[] = [
     description:
       "Real cocoa, premium nuts and dates meet in a deeply chocolatey bite. Soft, rich and satisfying, with natural vanilla and cinnamon for a rounded finish.",
     short: "Real cocoa and premium nuts, naturally sweetened.",
-    price: 699,
+    price: 349.5,
     mrp: 699,
     weight: "250g",
     accent: "#3d2117",
@@ -160,7 +160,7 @@ const healthy: StoreProduct[] = [
     description:
       "A luxurious blend of walnuts and wholesome ingredients crafted into fudgy, satisfying bites. Pure, natural and packed with the goodness of walnut-rich nutrition.",
     short: "Fudgy cocoa bites with generous walnut pieces.",
-    price: 799,
+    price: 399.5,
     mrp: 799,
     weight: "250g",
     accent: "#35512d",
@@ -199,7 +199,7 @@ const healthy: StoreProduct[] = [
     description:
       "Roasted peanuts, cocoa and dates come together in a deliciously crunchy, everyday bite. A familiar flavour made more nourishing and deeply satisfying.",
     short: "Roasted peanut crunch with dates and cocoa.",
-    price: 499,
+    price: 249.5,
     mrp: 499,
     weight: "250g",
     accent: "#c75d13",
@@ -322,35 +322,45 @@ function slugify(value: string) {
 
 const catalogueProducts: StoreProduct[] = catalogueGroups.flatMap(
   ([categorySlug, group, names], groupIndex) =>
-    names.map((name, index) => ({
-      slug: slugify(name),
-      name,
-      category: group,
-      categorySlug,
-      description: `${name} selected for clean flavour, natural texture and dependable K1 quality. Packed fresh in Kashmir after careful grading and quality checks.`,
-      short: `Premium ${name.toLowerCase()}, selected and freshness packed.`,
-      price: 499 + ((groupIndex + index) % 5) * 100,
-      mrp: 599 + ((groupIndex + index) % 5) * 100,
-      weight: "250g",
-      accent:
-        categories.find((c) => c.slug === categorySlug)?.tone ?? "#8a5a2b",
-      emoji:
-        categorySlug === "nuts"
-          ? "◒"
-          : categorySlug === "dry-fruits-berries"
-            ? "✦"
-            : "⌁",
-      benefits: [
-        "Quality graded",
-        "Freshness packed",
-        "No artificial colours",
-        "K1 selected",
-      ],
-    })),
+    names.map((name, index) => {
+      const mrp = 598 + ((groupIndex + index) % 5) * 100;
+      const slug = slugify(name);
+      return {
+        slug,
+        name,
+        category: group,
+        categorySlug,
+        description: `${name} selected for clean flavour, natural texture and dependable K1 quality. Packed fresh in Kashmir after careful grading and quality checks.`,
+        short: `Premium ${name.toLowerCase()}, selected and freshness packed.`,
+        price: mrp / 2,
+        mrp,
+        weight: categorySlug === "cold-pressed-oils" ? "500ml" : "250g",
+        accent:
+          categories.find((c) => c.slug === categorySlug)?.tone ?? "#8a5a2b",
+        image: `/products/catalogue/${slug}.png`,
+        emoji:
+          categorySlug === "nuts"
+            ? "◒"
+            : categorySlug === "dry-fruits-berries"
+              ? "✦"
+              : "⌁",
+        benefits: [
+          "Quality graded",
+          "Freshness packed",
+          "No artificial colours",
+          "K1 selected",
+        ],
+      };
+    }),
 );
 
 export const products = [...healthy, ...catalogueProducts];
 export const healthyProducts = healthy;
+export const formatInr = (value: number) =>
+  value.toLocaleString("en-IN", {
+    minimumFractionDigits: Number.isInteger(value) ? 0 : 2,
+    maximumFractionDigits: 2,
+  });
 export const getProduct = (slug: string) =>
   products.find((product) => product.slug === slug);
 export const getCategory = (slug: string) =>

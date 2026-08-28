@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { categories, healthyProducts } from "./store-data";
+import { categories, formatInr, healthyProducts } from "./store-data";
 import {
   AddToCartButton,
   StoreFooter,
@@ -48,6 +48,14 @@ export default function Home() {
               THE HEALTHY
               <br />
               SNACKIVERSE
+            </span>
+          </div>
+          <div className="saleHeroFlag">
+            <b>50%</b>
+            <span>
+              OFF MRP
+              <br />
+              ON EVERY PRODUCT
             </span>
           </div>
           <h1>
@@ -158,7 +166,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="brandManifesto">
+      <section className="brandManifesto" id="manifesto">
         <p>
           WE DON&apos;T MAKE
           <br />
@@ -211,8 +219,9 @@ export default function Home() {
                 <small>{product.short}</small>
                 <Link href={`/product/${product.slug}`}>{product.name}</Link>
                 <div>
-                  <b>₹{product.price}</b>
-                  <span>{product.weight}</span>
+                  <b>₹{formatInr(product.price)}</b>
+                  <del>₹{formatInr(product.mrp)}</del>
+                  <span>{product.weight} · 50% OFF</span>
                 </div>
                 <AddToCartButton product={product} />
               </div>
@@ -386,7 +395,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="tradeBanner">
+      <section className="tradeBanner" id="wholesale">
         <div>
           <p className="brandEyebrow light">
             <span /> RETAIL · GIFTING · CORPORATE
