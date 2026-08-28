@@ -14,11 +14,11 @@ export async function generateMetadata(): Promise<Metadata> {
   const base = new URL(`${protocol}://${host}`);
   return {
     metadataBase: base,
-    title: "K1 Nuts — Exceptional Nuts & Dry Fruits from Srinagar",
-    description: "Premium nuts, dry fruits, berries, healthy snacks, spices and cold-pressed oils from K1 Nuts, Srinagar.",
+    title: "K1 Nuts — Goodness in Motion from Kashmir",
+    description: "Discover K1 Nuts: premium healthy bites, nuts, dry fruits, berries, spices and cold-pressed oils from Srinagar, Kashmir.",
     icons: { icon: "/favicon.svg" },
-    openGraph: { title: "K1 Nuts — Rare Origins. Remarkable Taste.", description: "Exceptional nuts and dry fruits from Srinagar, Kashmir.", images: [{ url: new URL("/og.png", base).toString(), width: 1536, height: 1024 }] },
-    twitter: { card: "summary_large_image", title: "K1 Nuts", description: "Rare origins. Remarkable taste.", images: [new URL("/og.png", base).toString()] },
+    openGraph: { title: "K1 Nuts — Goodness in Motion.", description: "Healthy bites and Himalayan pantry essentials, crafted in Srinagar.", images: [{ url: new URL("/og.png", base).toString(), width: 1728, height: 918 }] },
+    twitter: { card: "summary_large_image", title: "K1 Nuts — Goodness in Motion.", description: "Healthy bites and Himalayan pantry essentials, crafted in Srinagar.", images: [new URL("/og.png", base).toString()] },
   };
 }
 
