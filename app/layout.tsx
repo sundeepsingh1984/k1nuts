@@ -13,11 +13,11 @@ export async function generateMetadata(): Promise<Metadata> {
   const base = new URL(`${protocol}://${host}`);
   return {
     metadataBase: base,
-    title: "Nourish & Nut — Nature, Perfected",
-    description: "Premium dry fruits, nuts and mindful gifts — sourced honestly and packed fresh.",
+    title: "K1 Nuts — Exceptional Nuts & Dry Fruits from Srinagar",
+    description: "Premium nuts, dry fruits, berries, healthy snacks, spices and cold-pressed oils from K1 Nuts, Srinagar.",
     icons: { icon: "/favicon.svg" },
-    openGraph: { title: "Nourish & Nut — Nature, Perfected", description: "Snack better. Live fuller.", images: [{ url: new URL("/og.png", base).toString(), width: 1536, height: 1024 }] },
-    twitter: { card: "summary_large_image", title: "Nourish & Nut", description: "Snack better. Live fuller.", images: [new URL("/og.png", base).toString()] },
+    openGraph: { title: "K1 Nuts — Rare Origins. Remarkable Taste.", description: "Exceptional nuts and dry fruits from Srinagar, Kashmir.", images: [{ url: new URL("/og.png", base).toString(), width: 1536, height: 1024 }] },
+    twitter: { card: "summary_large_image", title: "K1 Nuts", description: "Rare origins. Remarkable taste.", images: [new URL("/og.png", base).toString()] },
   };
 }
 
