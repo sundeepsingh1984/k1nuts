@@ -6,6 +6,7 @@ import {
   StoreHeader,
 } from "../../storefront-context";
 import { formatInr, getProduct, products } from "../../store-data";
+import { ProductReviews } from "../../product-reviews";
 
 export function generateStaticParams() {
   return products.map((product) => ({ slug: product.slug }));
@@ -46,6 +47,8 @@ export default async function ProductPage({
           <img
             src={product.image}
             alt={`${product.name} ${product.weight} K1 packaging`}
+            fetchPriority="high"
+            decoding="async"
           />
           <div className="galleryNote">
             K1 BRANDED PACK VISUAL · FINAL STATUTORY COPY SUBJECT TO APPROVAL
@@ -154,8 +157,14 @@ export default async function ProductPage({
           </span>
         ))}
       </section>
+      <ProductReviews productSlug={product.slug} productName={product.name} />
       <section className="productStory">
-        <img src="/k1-logo.jpeg" alt="K1 Nut's Delicacy from the Himalayas" />
+        <img
+          src="/k1-logo.jpeg"
+          alt="K1 Nut's Delicacy from the Himalayas"
+          loading="lazy"
+          decoding="async"
+        />
         <div>
           <p className="brandEyebrow">
             <span /> THE K1 PROMISE

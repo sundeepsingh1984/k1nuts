@@ -8,6 +8,13 @@
       "when": 1787928479889,
       "tag": "0000_dry_paper_doll",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1788111157902,
+      "tag": "0001_careless_cloak",
+      "breakpoints": true
     }
   ]
 }

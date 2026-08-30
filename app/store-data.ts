@@ -26,7 +26,7 @@ export const categories = [
       "Date, nut, seed and cocoa bites inspired by Kashmir and made for everyday energy.",
     emoji: "●",
     tone: "#4d2a18",
-    image: "/categories/healthy-snacks.png",
+    image: "/categories/healthy-snacks.webp",
   },
   {
     slug: "nuts",
@@ -36,7 +36,7 @@ export const categories = [
       "Almonds, pistachios, walnuts and exceptional kernels selected by origin and grade.",
     emoji: "◒",
     tone: "#8a5a2b",
-    image: "/categories/nuts.png",
+    image: "/categories/nuts.webp",
   },
   {
     slug: "dry-fruits-berries",
@@ -46,7 +46,7 @@ export const categories = [
       "Figs, berries, raisins and orchard fruit chosen for texture, colour and natural sweetness.",
     emoji: "✦",
     tone: "#6a3f58",
-    image: "/categories/dry-fruits-berries.png",
+    image: "/categories/dry-fruits-berries.webp",
   },
   {
     slug: "spices-herbs",
@@ -56,7 +56,7 @@ export const categories = [
       "Pure, aromatic pantry essentials rooted in Himalayan food culture.",
     emoji: "⌁",
     tone: "#58613b",
-    image: "/categories/spices-herbs.png",
+    image: "/categories/spices-herbs.webp",
   },
   {
     slug: "cold-pressed-oils",
@@ -66,7 +66,7 @@ export const categories = [
       "Small-batch oils created for flavour, nourishment and everyday rituals.",
     emoji: "◉",
     tone: "#7b6b28",
-    image: "/categories/cold-pressed-oils.png",
+    image: "/categories/cold-pressed-oils.webp",
   },
 ];
 
@@ -83,7 +83,7 @@ const healthy: StoreProduct[] = [
     mrp: 599,
     weight: "250g",
     accent: "#5e3b78",
-    image: "/products/kashmiri-mewa-bites.png",
+    image: "/products/kashmiri-mewa-bites.webp",
     emoji: "✦",
     badge: "CORE RANGE",
     ingredients: [
@@ -124,7 +124,7 @@ const healthy: StoreProduct[] = [
     mrp: 699,
     weight: "250g",
     accent: "#3d2117",
-    image: "/products/chocolate-truffle-bites.png",
+    image: "/products/chocolate-truffle-bites.webp",
     emoji: "◆",
     badge: "PREMIUM RANGE",
     ingredients: [
@@ -164,7 +164,7 @@ const healthy: StoreProduct[] = [
     mrp: 799,
     weight: "250g",
     accent: "#35512d",
-    image: "/products/walnut-chocolate-fudge.png",
+    image: "/products/walnut-chocolate-fudge.webp",
     emoji: "◉",
     badge: "SUPER PREMIUM",
     ingredients: [
@@ -203,7 +203,7 @@ const healthy: StoreProduct[] = [
     mrp: 499,
     weight: "250g",
     accent: "#c75d13",
-    image: "/products/peanut-chocolate-bites.png",
+    image: "/products/peanut-chocolate-bites.webp",
     emoji: "●",
     badge: "VALUE RANGE",
     ingredients: [
@@ -337,7 +337,7 @@ const catalogueProducts: StoreProduct[] = catalogueGroups.flatMap(
         weight: categorySlug === "cold-pressed-oils" ? "500ml" : "250g",
         accent:
           categories.find((c) => c.slug === categorySlug)?.tone ?? "#8a5a2b",
-        image: `/products/catalogue/${slug}.png`,
+        image: `/products/catalogue/${slug}.webp`,
         emoji:
           categorySlug === "nuts"
             ? "◒"

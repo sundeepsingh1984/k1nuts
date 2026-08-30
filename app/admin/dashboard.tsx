@@ -38,6 +38,7 @@ export default function AdminDashboard({
   const [activity, setActivity] = useState<Activity[]>(demoActivity);
   const [tab, setTab] = useState("overview");
   const [toast, setToast] = useState("");
+  const [renderedAt] = useState(Date.now);
   useEffect(() => {
     fetch("/api/events")
       .then((r) => (r.ok ? r.json() : Promise.reject()))
@@ -151,7 +152,7 @@ export default function AdminDashboard({
                     <em>
                       {Math.max(
                         1,
-                        Math.floor((Date.now() - event.createdAt) / 60000),
+                        Math.floor((renderedAt - event.createdAt) / 60000),
                       )}
                       m
                     </em>

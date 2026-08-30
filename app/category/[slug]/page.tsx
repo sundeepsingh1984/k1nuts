@@ -68,7 +68,12 @@ export default async function CategoryPage({
                 style={{ background: "#f3eadc" }}
               >
                 <span className="listingSaleBadge">50% OFF</span>
-                <img src={product.image} alt={`${product.name} K1 packaging`} />
+                <img
+                  src={product.image}
+                  alt={`${product.name} K1 packaging`}
+                  loading="lazy"
+                  decoding="async"
+                />
                 <i>0{index + 1}</i>
               </Link>
               <p>{product.category}</p>

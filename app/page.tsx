@@ -1,33 +1,11 @@
-"use client";
-
 import Link from "next/link";
+import { ReviewCarousel } from "./review-carousel";
 import { categories, formatInr, healthyProducts } from "./store-data";
 import {
   AddToCartButton,
   StoreFooter,
   StoreHeader,
 } from "./storefront-context";
-
-const googleMapsUrl =
-  "https://www.google.com/maps/place/K1+nuts/@34.0586242,74.7972288,17z/data=!3m1!4b1!4m6!3m5!1s0x38e18f251fbd8967:0xda71c93f397abc03!8m2!3d34.0586242!4d74.7972288!16s%2Fg%2F11y58v_gcg";
-
-const googleReviews = [
-  {
-    quote: "The dry fruits were fresh.",
-    name: "Parth Sanghavi",
-    detail: "Verified Google review",
-  },
-  {
-    quote: "The nuts/seeds mix was great and really tasty.",
-    name: "Jagdeep Kochar",
-    detail: "Verified Google review",
-  },
-  {
-    quote: "Quality of dry fruits is very good.",
-    name: "Jaskirat Singh Gujral",
-    detail: "Verified Google review",
-  },
-];
 
 export default function Home() {
   return (
@@ -212,7 +190,12 @@ export default function Home() {
                 className="signatureImage"
               >
                 <span className="rangeBadge">{product.badge}</span>
-                <img src={product.image} alt={product.name} />
+                <img
+                  src={product.image}
+                  alt={product.name}
+                  loading="lazy"
+                  decoding="async"
+                />
                 <i>0{index + 1}</i>
               </Link>
               <div className="signatureInfo">
@@ -255,7 +238,12 @@ export default function Home() {
               href={`/category/${category.slug}`}
               className={`categoryScene ${index === 0 ? "categorySceneLead" : ""}`}
             >
-              <img src={category.image} alt={`${category.name} by K1 Nut's`} />
+              <img
+                src={category.image}
+                alt={`${category.name} by K1 Nut's`}
+                loading="lazy"
+                decoding="async"
+              />
               <div className="categoryShade" />
               <img className="categoryLogo" src="/k1-logo.jpeg" alt="" />
               <small>0{index + 1} / K1 PANTRY</small>
@@ -276,8 +264,10 @@ export default function Home() {
         <div className="originVisual">
           <img
             className="originLandscape"
-            src="/categories/spices-herbs.png"
+            src="/categories/spices-herbs.webp"
             alt="Kashmiri saffron and spices overlooking the Himalayas"
+            loading="lazy"
+            decoding="async"
           />
           <div className="originStamp">
             <img src="/k1-logo.jpeg" alt="K1 Nut's logo" />
@@ -348,52 +338,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="googleReviews sectionNew" id="testimonials">
-        <div className="reviewHeader">
-          <div>
-            <p className="brandEyebrow">
-              <span /> REAL WORDS · REAL CUSTOMERS
-            </p>
-            <h2>
-              Five stars,
-              <br />
-              <em>straight from Google.</em>
-            </h2>
-          </div>
-          <a
-            href={googleMapsUrl}
-            target="_blank"
-            rel="noreferrer"
-            className="googleScore"
-          >
-            <span>G</span>
-            <b>5.0</b>
-            <div>
-              <em>★★★★★</em>
-              <small>13 GOOGLE REVIEWS</small>
-            </div>
-          </a>
-        </div>
-        <div className="reviewRail">
-          {googleReviews.map((review, index) => (
-            <blockquote key={review.name}>
-              <div className="reviewStars">★★★★★</div>
-              <p>“{review.quote}”</p>
-              <footer>
-                <span>{review.name}</span>
-                <small>{review.detail}</small>
-                <b>0{index + 1}</b>
-              </footer>
-            </blockquote>
-          ))}
-        </div>
-        <div className="reviewSource">
-          <span>Verified from the K1 Nuts Google listing</span>
-          <a href={googleMapsUrl} target="_blank" rel="noreferrer">
-            READ ALL REVIEWS ON GOOGLE ↗
-          </a>
-        </div>
-      </section>
+      <ReviewCarousel />
 
       <section className="tradeBanner" id="wholesale">
         <div>

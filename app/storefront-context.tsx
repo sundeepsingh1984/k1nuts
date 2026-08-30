@@ -2,7 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import { formatInr, type StoreProduct } from "./store-data";
 
 type CartLine = { product: StoreProduct; quantity: number };
@@ -24,10 +31,7 @@ export function StorefrontProvider({
 }) {
   const [cart, setCart] = useState<CartLine[]>([]);
   const [cartOpen, setCartOpen] = useState(false);
-  const [accountOpen, setAccountOpen] = useState(false);
   const [signedIn, setSignedIn] = useState(false);
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const pathname = usePathname();
   const count = cart.reduce((sum, line) => sum + line.quantity, 0);
   const subtotal = cart.reduce(
@@ -35,44 +39,56 @@ export function StorefrontProvider({
     0,
   );
 
-  const track = (event: string, productSlug?: string) => {
-    fetch("/api/events", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ event, path: pathname, productSlug }),
-    }).catch(() => {});
-  };
+  const track = useCallback(
+    (event: string, productSlug?: string) => {
+      fetch("/api/events", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ event, path: pathname, productSlug }),
+      }).catch(() => {});
+    },
+    [pathname],
+  );
 
   useEffect(() => {
     track("page_view");
-  }, [pathname]);
+  }, [track]);
 
-  function add(product: StoreProduct) {
-    setCart((lines) => {
-      const found = lines.find((line) => line.product.slug === product.slug);
-      return found
-        ? lines.map((line) =>
-            line.product.slug === product.slug
-              ? { ...line, quantity: line.quantity + 1 }
-              : line,
-          )
-        : [...lines, { product, quantity: 1 }];
-    });
-    setCartOpen(true);
-    track("add_to_cart", product.slug);
-  }
+  useEffect(() => {
+    fetch("/api/account/session", { cache: "no-store" })
+      .then((response) => (response.ok ? response.json() : null))
+      .then((session) => setSignedIn(Boolean(session?.signedIn)))
+      .catch(() => setSignedIn(false));
+  }, []);
+
+  const add = useCallback(
+    (product: StoreProduct) => {
+      setCart((lines) => {
+        const found = lines.find((line) => line.product.slug === product.slug);
+        return found
+          ? lines.map((line) =>
+              line.product.slug === product.slug
+                ? { ...line, quantity: line.quantity + 1 }
+                : line,
+            )
+          : [...lines, { product, quantity: 1 }];
+      });
+      setCartOpen(true);
+      track("add_to_cart", product.slug);
+    },
+    [track],
+  );
 
   function startCheckout() {
     if (!signedIn) {
       setCartOpen(false);
-      setAccountOpen(true);
       track("checkout_login_gate");
+      window.location.href =
+        "/signin-with-chatgpt?return_to=%2Faccount%3Ftab%3Daddresses%26checkout%3D1";
       return;
     }
     track("begin_checkout");
-    alert(
-      "Checkout is staged. Connect Razorpay or PhonePe merchant credentials before accepting live payments.",
-    );
+    window.location.href = "/account?tab=addresses&checkout=1";
   }
 
   const value = useMemo(
@@ -85,17 +101,18 @@ export function StorefrontProvider({
       openCart: () => setCartOpen(true),
       signedIn,
     }),
-    [cart, count, signedIn],
+    [add, cart, count, signedIn],
   );
 
   return (
     <StoreContext.Provider value={value}>
       {children}
-      <div
-        className={`commerceOverlay ${cartOpen || accountOpen ? "show" : ""}`}
+      <button
+        type="button"
+        aria-label="Close shopping bag"
+        className={`commerceOverlay ${cartOpen ? "show" : ""}`}
         onClick={() => {
           setCartOpen(false);
-          setAccountOpen(false);
         }}
       />
       <aside className={`commerceDrawer ${cartOpen ? "open" : ""}`}>
@@ -157,59 +174,6 @@ export function StorefrontProvider({
           </div>
         )}
       </aside>
-      <section
-        className={`accountModal ${accountOpen ? "open" : ""}`}
-        role="dialog"
-        aria-modal="true"
-      >
-        <button className="modalX" onClick={() => setAccountOpen(false)}>
-          ×
-        </button>
-        <img src="/k1-logo.jpeg" alt="K1 Nut's" />
-        <small>MEMBER CHECKOUT</small>
-        <h2>
-          Welcome to
-          <br />
-          the K1 family.
-        </h2>
-        <p>
-          Create an account or log in to protect your order and track every
-          delivery.
-        </p>
-        <label>
-          Email
-          <input
-            type="email"
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
-            placeholder="you@example.com"
-          />
-        </label>
-        <label>
-          Password
-          <input
-            type="password"
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
-            placeholder="••••••••"
-          />
-        </label>
-        <button
-          className="brandButton"
-          disabled={!email.includes("@") || password.length < 4}
-          onClick={() => {
-            setSignedIn(true);
-            setAccountOpen(false);
-            setCartOpen(true);
-            track("account_login");
-          }}
-        >
-          CONTINUE SECURELY →
-        </button>
-        <span className="demoLine">
-          Secure preview · production identity provider required
-        </span>
-      </section>
     </StoreContext.Provider>
   );
 }
@@ -249,7 +213,17 @@ export function StoreHeader() {
           <Link href="/admin" className="adminLink">
             Admin
           </Link>
-          <button title={signedIn ? "Signed in" : "Account"}>◎</button>
+          <Link
+            href={
+              signedIn
+                ? "/account"
+                : "/signin-with-chatgpt?return_to=%2Faccount"
+            }
+            className="accountLink"
+            title={signedIn ? "My account" : "Sign in"}
+          >
+            {signedIn ? "MY K1" : "SIGN IN"}
+          </Link>
           <button className="headerBag" onClick={openCart}>
             BAG <b>{count}</b>
           </button>
