@@ -1,3 +1,12 @@
+export type ProductVariant = {
+  label: string;
+  weightGrams: number;
+  sku: string;
+  price: number;
+  mrp: number;
+  stock: number;
+};
+
 export type StoreProduct = {
   slug: string;
   name: string;
@@ -15,6 +24,7 @@ export type StoreProduct = {
   benefits?: string[];
   composition?: Array<[string, number]>;
   badge?: string;
+  variants?: ProductVariant[];
 };
 
 export const categories = [
@@ -367,3 +377,45 @@ export const getCategory = (slug: string) =>
   categories.find((category) => category.slug === slug);
 export const getCategoryProducts = (slug: string) =>
   products.filter((product) => product.categorySlug === slug);
+
+export function getProductVariants(product: StoreProduct): ProductVariant[] {
+  if (product.variants?.length) return product.variants;
+  const oil = product.categorySlug === "cold-pressed-oils";
+  const baseSize = oil ? 500 : 250;
+  const options = oil
+    ? [
+        ["250ml", 250],
+        ["500ml", 500],
+        ["1L", 1000],
+      ]
+    : [
+        ["250g", 250],
+        ["500g", 500],
+        ["1kg", 1000],
+      ];
+
+  return options.map(([label, grams]) => {
+    const multiplier = Number(grams) / baseSize;
+    return {
+      label: String(label),
+      weightGrams: Number(grams),
+      sku: `K1-${product.slug.toUpperCase()}-${grams}`,
+      price: Number((product.price * multiplier).toFixed(2)),
+      mrp: Number((product.mrp * multiplier).toFixed(2)),
+      stock: 100,
+    };
+  });
+}
+
+export function productWithVariant(
+  product: StoreProduct,
+  variant: ProductVariant,
+): StoreProduct {
+  return {
+    ...product,
+    weight: variant.label,
+    price: variant.price,
+    mrp: variant.mrp,
+    variants: product.variants,
+  };
+}

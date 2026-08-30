@@ -64,6 +64,7 @@ export const customerOrders = sqliteTable(
     status: text("status").notNull().default("confirmed"),
     paymentStatus: text("payment_status").notNull().default("pending"),
     totalPaise: integer("total_paise").notNull(),
+    shippingAddressId: integer("shipping_address_id"),
     carrier: text("carrier"),
     trackingNumber: text("tracking_number"),
     trackingUrl: text("tracking_url"),
@@ -86,12 +87,110 @@ export const orderItems = sqliteTable(
     orderId: integer("order_id").notNull(),
     productSlug: text("product_slug").notNull(),
     productName: text("product_name").notNull(),
+    variantLabel: text("variant_label").notNull().default("250g"),
+    sku: text("sku"),
     quantity: integer("quantity").notNull(),
     unitPricePaise: integer("unit_price_paise").notNull(),
   },
   (table) => [
     index("idx_order_items_order_id").on(table.orderId),
     index("idx_order_items_product_slug").on(table.productSlug),
+  ],
+);
+
+export const adminProducts = sqliteTable(
+  "admin_products",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    slug: text("slug").notNull(),
+    name: text("name").notNull(),
+    category: text("category").notNull(),
+    categorySlug: text("category_slug").notNull(),
+    description: text("description").notNull(),
+    short: text("short").notNull(),
+    accent: text("accent").notNull().default("#8a5a2b"),
+    image: text("image").notNull(),
+    badge: text("badge").notNull().default("K1 SELECTED"),
+    active: integer("active", { mode: "boolean" }).notNull().default(true),
+    createdAt: integer("created_at").notNull(),
+    updatedAt: integer("updated_at").notNull(),
+  },
+  (table) => [
+    uniqueIndex("idx_admin_products_slug").on(table.slug),
+    index("idx_admin_products_category_active").on(
+      table.categorySlug,
+      table.active,
+    ),
+  ],
+);
+
+export const productVariants = sqliteTable(
+  "product_variants",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    productSlug: text("product_slug").notNull(),
+    label: text("label").notNull(),
+    weightGrams: integer("weight_grams").notNull(),
+    sku: text("sku").notNull(),
+    pricePaise: integer("price_paise").notNull(),
+    mrpPaise: integer("mrp_paise").notNull(),
+    stock: integer("stock").notNull().default(0),
+    active: integer("active", { mode: "boolean" }).notNull().default(true),
+    createdAt: integer("created_at").notNull(),
+    updatedAt: integer("updated_at").notNull(),
+  },
+  (table) => [
+    uniqueIndex("idx_product_variants_sku").on(table.sku),
+    uniqueIndex("idx_product_variants_product_label").on(
+      table.productSlug,
+      table.label,
+    ),
+    index("idx_product_variants_product_active").on(
+      table.productSlug,
+      table.active,
+    ),
+  ],
+);
+
+export const orderReturns = sqliteTable(
+  "order_returns",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    orderId: integer("order_id").notNull(),
+    status: text("status").notNull().default("requested"),
+    reason: text("reason").notNull(),
+    amountPaise: integer("amount_paise").notNull().default(0),
+    createdAt: integer("created_at").notNull(),
+    updatedAt: integer("updated_at").notNull(),
+  },
+  (table) => [
+    index("idx_order_returns_order_id").on(table.orderId),
+    index("idx_order_returns_status_created").on(table.status, table.createdAt),
+  ],
+);
+
+export const orderShipments = sqliteTable(
+  "order_shipments",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    orderId: integer("order_id").notNull(),
+    provider: text("provider").notNull(),
+    externalOrderId: text("external_order_id"),
+    externalShipmentId: text("external_shipment_id"),
+    carrier: text("carrier"),
+    trackingNumber: text("tracking_number"),
+    status: text("status").notNull().default("created"),
+    labelUrl: text("label_url"),
+    trackingUrl: text("tracking_url"),
+    createdAt: integer("created_at").notNull(),
+    updatedAt: integer("updated_at").notNull(),
+  },
+  (table) => [
+    uniqueIndex("idx_order_shipments_order_provider").on(
+      table.orderId,
+      table.provider,
+    ),
+    index("idx_order_shipments_tracking").on(table.trackingNumber),
   ],
 );
 

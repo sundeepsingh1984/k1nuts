@@ -56,3 +56,28 @@ test("ships account, review and commerce data capabilities", async () => {
   assert.match(schema, /customerOrders/);
   assert.doesNotMatch(storeData, /catalogue\/[a-z0-9-]+\.png/);
 });
+
+test("ships structured collections, variants and carrier integrations", async () => {
+  const [admin, category, variants, shipping, schema] = await Promise.all([
+    readFile(new URL("../app/admin/dashboard.tsx", import.meta.url), "utf8"),
+    readFile(
+      new URL("../app/category/[slug]/category-catalogue.tsx", import.meta.url),
+      "utf8",
+    ),
+    readFile(new URL("../app/store-data.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/shipping.ts", import.meta.url), "utf8"),
+    readFile(new URL("../db/schema.ts", import.meta.url), "utf8"),
+  ]);
+  assert.match(category, /Choose by origin/);
+  assert.match(variants, /250g/);
+  assert.match(variants, /500g/);
+  assert.match(variants, /1kg/);
+  assert.match(admin, /CREATE PRODUCT \+ 3 VARIANTS/);
+  assert.match(admin, /SHIP WITH SHIPROCKET/);
+  assert.match(admin, /SHIP WITH AMAZON/);
+  assert.match(shipping, /orders\/create\/adhoc/);
+  assert.match(shipping, /shipping\/v2\/shipments\/rates/);
+  assert.match(schema, /productVariants/);
+  assert.match(schema, /orderReturns/);
+  assert.match(schema, /orderShipments/);
+});

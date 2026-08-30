@@ -1,17 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import {
-  categories,
-  formatInr,
-  getCategory,
-  getCategoryProducts,
-} from "../../store-data";
-import { CategoryAddButton } from "./product-actions";
+import { getCategoryCatalogue } from "../../catalogue-db";
+import { categories, getCategory } from "../../store-data";
 import { StoreFooter, StoreHeader } from "../../storefront-context";
+import { CategoryCatalogue } from "./category-catalogue";
 
-export function generateStaticParams() {
-  return categories.map((category) => ({ slug: category.slug }));
-}
+export const dynamic = "force-dynamic";
 
 export default async function CategoryPage({
   params,
@@ -21,76 +15,79 @@ export default async function CategoryPage({
   const { slug } = await params;
   const category = getCategory(slug);
   if (!category) notFound();
-  const products = getCategoryProducts(slug);
+  const products = await getCategoryCatalogue(slug);
 
   return (
-    <main className="brandSite">
+    <main className="brandSite categoryPage">
       <StoreHeader />
       <section
-        className="categoryHero categoryHeroVisual"
+        className="categoryHeroPro"
         style={{ "--tone": category.tone } as React.CSSProperties}
       >
-        <img
-          className="categoryHeroImage"
-          src={category.image}
-          alt={`${category.name} by K1 Nut's`}
-        />
-        <div className="categoryHeroVeil" />
-        <div>
+        <div className="categoryHeroCopy">
           <div className="breadcrumbs">
             <Link href="/">HOME</Link>
             <span>/</span>
             <b>{category.name.toUpperCase()}</b>
           </div>
-          <p>{category.kicker}</p>
-          <h1>{category.name}</h1>
-          <em>{category.description}</em>
-        </div>
-        <img className="categoryHeroLogo" src="/k1-logo.jpeg" alt="K1 Nut's" />
-      </section>
-      <section className="categoryListing sectionNew">
-        <div className="listingHead">
-          <div>
-            <b>{products.length}</b>
-            <span>PRODUCTS & VARIETIES</span>
-          </div>
-          <p>
-            Every variety has its own branded pack visual, description, origin
-            information and purchase controls.
+          <p className="brandEyebrow light">
+            <span /> {category.kicker}
           </p>
+          <h1>{category.name}</h1>
+          <p className="categoryHeroDescription">{category.description}</p>
+          <div className="categoryHeroProof">
+            <span>
+              <b>{products.length}</b> CURATED PRODUCTS
+            </span>
+            <span>
+              <b>3</b> PACK SIZES
+            </span>
+            <span>
+              <b>50%</b> OFF MRP
+            </span>
+          </div>
         </div>
-        <div className="listingGrid">
-          {products.map((product, index) => (
-            <article className="listingCard" key={product.slug}>
-              <Link
-                href={`/product/${product.slug}`}
-                className="listingImage"
-                style={{ background: "#f3eadc" }}
-              >
-                <span className="listingSaleBadge">50% OFF</span>
-                <img
-                  src={product.image}
-                  alt={`${product.name} K1 packaging`}
-                  loading="lazy"
-                  decoding="async"
-                />
-                <i>0{index + 1}</i>
-              </Link>
-              <p>{product.category}</p>
-              <Link href={`/product/${product.slug}`}>
-                <h2>{product.name}</h2>
-              </Link>
-              <small>{product.short}</small>
-              <div className="listingPrice">
-                <b>₹{formatInr(product.price)}</b>
-                <del>₹{formatInr(product.mrp)}</del>
-                <span>50% OFF · {product.weight}</span>
-              </div>
-              <CategoryAddButton product={product} />
-            </article>
-          ))}
+        <div className="categoryHeroMedia">
+          <img
+            src={category.image}
+            alt={`${category.name} by K1 Nut's`}
+            fetchPriority="high"
+            decoding="async"
+          />
+          <div className="categoryHeroSeal">
+            <img src="/k1-logo.jpeg" alt="K1 Nut's" />
+            <span>SELECTED IN KASHMIR</span>
+          </div>
+          <b className="categoryHeroIndex">
+            {String(
+              categories.findIndex((item) => item.slug === slug) + 1,
+            ).padStart(2, "0")}
+          </b>
         </div>
       </section>
+
+      <nav className="categorySwitch" aria-label="Shop by category">
+        {categories.map((item) => (
+          <Link
+            href={`/category/${item.slug}`}
+            className={item.slug === slug ? "active" : ""}
+            key={item.slug}
+          >
+            <span>{item.kicker}</span>
+            <b>{item.name}</b>
+          </Link>
+        ))}
+      </nav>
+
+      <section className="categoryPromise">
+        <span>ORIGIN &amp; GRADE SELECTED</span>
+        <i />
+        <span>FRESHNESS-SEALED PACKAGING</span>
+        <i />
+        <span>250G · 500G · 1KG OPTIONS</span>
+      </section>
+
+      <CategoryCatalogue products={products} />
       <StoreFooter />
     </main>
   );

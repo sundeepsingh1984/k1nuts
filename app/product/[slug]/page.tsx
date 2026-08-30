@@ -1,16 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import {
-  AddToCartButton,
-  StoreFooter,
-  StoreHeader,
-} from "../../storefront-context";
-import { formatInr, getProduct, products } from "../../store-data";
+import { StoreFooter, StoreHeader } from "../../storefront-context";
+import { getCatalogueProduct } from "../../catalogue-db";
 import { ProductReviews } from "../../product-reviews";
+import { ProductPurchasePanel } from "./product-purchase-panel";
 
-export function generateStaticParams() {
-  return products.map((product) => ({ slug: product.slug }));
-}
+export const dynamic = "force-dynamic";
 
 export default async function ProductPage({
   params,
@@ -18,7 +13,7 @@ export default async function ProductPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const product = getProduct(slug);
+  const product = await getCatalogueProduct(slug);
   if (!product) notFound();
   const packagingNote =
     product.categorySlug === "cold-pressed-oils"
@@ -70,16 +65,7 @@ export default async function ProductPage({
             ★★★★★ <span>5.0 · K1 GOOGLE RATING</span>
           </div>
           <p className="leadDescription">{product.description}</p>
-          <div className="priceLine">
-            <b>₹{formatInr(product.price)}</b>
-            <del>₹{formatInr(product.mrp)}</del>
-            <span>FLAT 50% OFF MRP · TAXES INCLUDED</span>
-          </div>
-          <div className="weightChoice">
-            <span>PACK SIZE</span>
-            <button>{product.weight}</button>
-          </div>
-          <AddToCartButton product={product} />
+          <ProductPurchasePanel product={product} />
           <div className="deliveryNotes">
             <span>✦ Free delivery above ₹799</span>
             <span>✦ {packagingNote}</span>

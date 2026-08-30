@@ -13,6 +13,8 @@ import {
 import { formatInr, type StoreProduct } from "./store-data";
 
 type CartLine = { product: StoreProduct; quantity: number };
+const cartLineId = (product: StoreProduct) =>
+  `${product.slug}::${product.weight}`;
 type StoreContextValue = {
   cart: CartLine[];
   count: number;
@@ -56,7 +58,11 @@ export function StorefrontProvider({
 
   useEffect(() => {
     fetch("/api/account/session", { cache: "no-store" })
-      .then((response) => (response.ok ? response.json() : null))
+      .then(async (response) =>
+        response.ok
+          ? ((await response.json()) as { signedIn?: boolean })
+          : null,
+      )
       .then((session) => setSignedIn(Boolean(session?.signedIn)))
       .catch(() => setSignedIn(false));
   }, []);
@@ -64,10 +70,12 @@ export function StorefrontProvider({
   const add = useCallback(
     (product: StoreProduct) => {
       setCart((lines) => {
-        const found = lines.find((line) => line.product.slug === product.slug);
+        const found = lines.find(
+          (line) => cartLineId(line.product) === cartLineId(product),
+        );
         return found
           ? lines.map((line) =>
-              line.product.slug === product.slug
+              cartLineId(line.product) === cartLineId(product)
                 ? { ...line, quantity: line.quantity + 1 }
                 : line,
             )
@@ -96,8 +104,10 @@ export function StorefrontProvider({
       cart,
       count,
       add,
-      remove: (slug: string) =>
-        setCart((lines) => lines.filter((line) => line.product.slug !== slug)),
+      remove: (lineId: string) =>
+        setCart((lines) =>
+          lines.filter((line) => cartLineId(line.product) !== lineId),
+        ),
       openCart: () => setCartOpen(true),
       signedIn,
     }),
@@ -136,7 +146,7 @@ export function StorefrontProvider({
             </div>
           ) : (
             cart.map((line) => (
-              <div className="drawerLine" key={line.product.slug}>
+              <div className="drawerLine" key={cartLineId(line.product)}>
                 <img src={line.product.image} alt="" />
                 <div>
                   <Link
@@ -150,7 +160,7 @@ export function StorefrontProvider({
                   </small>
                   <b>₹{formatInr(line.product.price * line.quantity)}</b>
                 </div>
-                <button onClick={() => value.remove(line.product.slug)}>
+                <button onClick={() => value.remove(cartLineId(line.product))}>
                   ×
                 </button>
               </div>
