@@ -1,6 +1,6 @@
 import { desc } from "drizzle-orm";
 import { env } from "cloudflare:workers";
-import { getChatGPTUser } from "../../../chatgpt-auth";
+import { getAdminUser } from "../../../admin-auth";
 import { getDb } from "../../../../db";
 import {
   adminProducts,
@@ -11,11 +11,12 @@ import {
 } from "../../../../db/schema";
 import { products } from "../../../store-data";
 import { getShippingConfiguration } from "../../../shipping";
+import { getMarketingConfiguration } from "../../../marketing";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-  const user = await getChatGPTUser();
+  const user = await getAdminUser();
   if (!user)
     return Response.json(
       { error: "Authentication required." },
@@ -31,6 +32,13 @@ export async function GET() {
     orders,
     returns,
     shipments,
+    topPagesResult,
+    topProductsResult,
+    topSearchesResult,
+    funnelResult,
+    performanceResult,
+    devicesResult,
+    productSalesResult,
   ] = await Promise.all([
     env.DB.prepare(
       `SELECT
@@ -68,6 +76,69 @@ export async function GET() {
       .from(orderShipments)
       .orderBy(desc(orderShipments.createdAt))
       .limit(50),
+    env.DB.prepare(
+      `SELECT path, COUNT(*) AS views, COUNT(DISTINCT session_id) AS visitors
+       FROM activity_events
+       WHERE event = 'page_view' AND created_at >= ?
+       GROUP BY path ORDER BY views DESC LIMIT 10`,
+    )
+      .bind(Date.now() - 30 * 86400000)
+      .all<Record<string, number | string>>(),
+    env.DB.prepare(
+      `SELECT product_slug,
+          SUM(CASE WHEN event = 'product_view' THEN 1 ELSE 0 END) AS views,
+          SUM(CASE WHEN event = 'add_to_cart' THEN 1 ELSE 0 END) AS adds,
+          COUNT(DISTINCT session_id) AS visitors
+       FROM activity_events
+       WHERE product_slug IS NOT NULL
+         AND event IN ('product_view', 'add_to_cart')
+         AND created_at >= ?
+       GROUP BY product_slug ORDER BY views DESC, adds DESC LIMIT 12`,
+    )
+      .bind(Date.now() - 30 * 86400000)
+      .all<Record<string, number | string>>(),
+    env.DB.prepare(
+      `SELECT search_term, COUNT(*) AS searches,
+          ROUND(AVG(result_count), 1) AS average_results,
+          SUM(CASE WHEN result_count = 0 THEN 1 ELSE 0 END) AS zero_results
+       FROM activity_events
+       WHERE event = 'catalogue_search' AND search_term IS NOT NULL
+         AND created_at >= ?
+       GROUP BY search_term ORDER BY searches DESC LIMIT 12`,
+    )
+      .bind(Date.now() - 30 * 86400000)
+      .all<Record<string, number | string>>(),
+    env.DB.prepare(
+      `SELECT
+          SUM(CASE WHEN event = 'page_view' THEN 1 ELSE 0 END) AS page_views,
+          COUNT(DISTINCT CASE WHEN event = 'page_view' THEN session_id END) AS sessions,
+          SUM(CASE WHEN event = 'product_view' THEN 1 ELSE 0 END) AS product_views,
+          SUM(CASE WHEN event = 'add_to_cart' THEN 1 ELSE 0 END) AS add_to_carts,
+          SUM(CASE WHEN event = 'begin_checkout' THEN 1 ELSE 0 END) AS checkouts
+       FROM activity_events WHERE created_at >= ?`,
+    )
+      .bind(Date.now() - 30 * 86400000)
+      .first<Record<string, number>>(),
+    env.DB.prepare(
+      `SELECT
+          ROUND(AVG(CASE WHEN event = 'web_vital_lcp' THEN duration_ms END)) AS lcp_ms,
+          ROUND(AVG(CASE WHEN event = 'web_vital_ttfb' THEN duration_ms END)) AS ttfb_ms,
+          ROUND(AVG(CASE WHEN event = 'web_vital_cls' THEN duration_ms END)) AS cls_milli
+       FROM activity_events WHERE created_at >= ?`,
+    )
+      .bind(Date.now() - 30 * 86400000)
+      .first<Record<string, number>>(),
+    env.DB.prepare(
+      `SELECT COALESCE(device, 'unknown') AS device, COUNT(DISTINCT session_id) AS sessions
+       FROM activity_events WHERE event = 'page_view' AND created_at >= ?
+       GROUP BY device ORDER BY sessions DESC`,
+    )
+      .bind(Date.now() - 30 * 86400000)
+      .all<Record<string, number | string>>(),
+    env.DB.prepare(
+      `SELECT product_slug, COALESCE(SUM(quantity), 0) AS units
+       FROM order_items GROUP BY product_slug`,
+    ).all<Record<string, number | string>>(),
   ]);
   const [customerCount, returnMetrics] = await Promise.all([
     env.DB.prepare("SELECT COUNT(*) AS count FROM customer_profiles").first<{
@@ -102,8 +173,50 @@ export async function GET() {
           shipments.find((shipment) => shipment.orderId === order.id) ?? null,
       })),
       returns,
-      integrations: getShippingConfiguration(),
+      insights: {
+        rangeDays: 30,
+        topPages: topPagesResult.results,
+        topProducts: topProductsResult.results.map((row) => ({
+          ...row,
+          units:
+            productSalesResult.results.find(
+              (sale) => sale.product_slug === row.product_slug,
+            )?.units ?? 0,
+        })),
+        topSearches: topSearchesResult.results,
+        funnel: {
+          pageViews: Number(funnelResult?.page_views ?? 0),
+          sessions: Number(funnelResult?.sessions ?? 0),
+          productViews: Number(funnelResult?.product_views ?? 0),
+          addToCarts: Number(funnelResult?.add_to_carts ?? 0),
+          checkouts: Number(funnelResult?.checkouts ?? 0),
+        },
+        performance: {
+          lcpMs: Number(performanceResult?.lcp_ms ?? 0),
+          ttfbMs: Number(performanceResult?.ttfb_ms ?? 0),
+          cls: Number(performanceResult?.cls_milli ?? 0) / 1000,
+        },
+        devices: devicesResult.results,
+        seo: {
+          indexablePages: 1 + categoriesCount() + products.length + customProducts.length,
+          productsWithDescriptions:
+            products.filter((product) => Boolean(product.description)).length +
+            customProducts.filter((product) => Boolean(product.description)).length,
+          productsWithImages:
+            products.filter((product) => Boolean(product.image)).length +
+            customProducts.filter((product) => Boolean(product.image)).length,
+          productCount: products.length + customProducts.length,
+        },
+      },
+      integrations: {
+        ...getShippingConfiguration(),
+        ...getMarketingConfiguration(),
+      },
     },
     { headers: { "cache-control": "private, no-store" } },
   );
+}
+
+function categoriesCount() {
+  return new Set(products.map((product) => product.categorySlug)).size;
 }

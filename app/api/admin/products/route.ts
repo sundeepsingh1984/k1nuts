@@ -1,5 +1,5 @@
 import { eq } from "drizzle-orm";
-import { getChatGPTUser } from "../../../chatgpt-auth";
+import { getAdminUser } from "../../../admin-auth";
 import { getDb } from "../../../../db";
 import { adminProducts, productVariants } from "../../../../db/schema";
 import { categories } from "../../../store-data";
@@ -19,7 +19,7 @@ function clean(value: unknown, max = 500) {
 }
 
 export async function POST(request: Request) {
-  const user = await getChatGPTUser();
+  const user = await getAdminUser();
   if (!user)
     return Response.json(
       { error: "Authentication required." },
@@ -105,7 +105,7 @@ export async function POST(request: Request) {
 }
 
 export async function PATCH(request: Request) {
-  const user = await getChatGPTUser();
+  const user = await getAdminUser();
   if (!user)
     return Response.json(
       { error: "Authentication required." },

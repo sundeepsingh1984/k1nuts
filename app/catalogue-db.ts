@@ -1,9 +1,11 @@
 import { and, eq, inArray } from "drizzle-orm";
+import { cache } from "react";
 import { getDb } from "../db";
 import { adminProducts, productVariants } from "../db/schema";
 import {
   getCategoryProducts,
   getProduct,
+  products,
   type ProductVariant,
   type StoreProduct,
 } from "./store-data";
@@ -73,7 +75,9 @@ async function loadCustomRows(categorySlug?: string, productSlug?: string) {
   );
 }
 
-export async function getCategoryCatalogue(categorySlug: string) {
+export const getCategoryCatalogue = cache(async function getCategoryCatalogue(
+  categorySlug: string,
+) {
   const builtIn = getCategoryProducts(categorySlug);
   try {
     const custom = await loadCustomRows(categorySlug);
@@ -85,9 +89,11 @@ export async function getCategoryCatalogue(categorySlug: string) {
   } catch {
     return builtIn;
   }
-}
+});
 
-export async function getCatalogueProduct(slug: string) {
+export const getCatalogueProduct = cache(async function getCatalogueProduct(
+  slug: string,
+) {
   try {
     const [custom] = await loadCustomRows(undefined, slug);
     if (custom) return custom;
@@ -95,4 +101,17 @@ export async function getCatalogueProduct(slug: string) {
     // Build and local preview can run before D1 migrations are applied.
   }
   return getProduct(slug);
-}
+});
+
+export const getAllCatalogueProducts = cache(async function getAllCatalogueProducts() {
+  try {
+    const custom = await loadCustomRows();
+    const customSlugs = new Set(custom.map((product) => product.slug));
+    return [
+      ...products.filter((product) => !customSlugs.has(product.slug)),
+      ...custom,
+    ];
+  } catch {
+    return products;
+  }
+});

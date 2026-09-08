@@ -1,11 +1,43 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getCategoryCatalogue } from "../../catalogue-db";
 import { categories, getCategory } from "../../store-data";
 import { StoreFooter, StoreHeader } from "../../storefront-context";
+import { absoluteUrl, safeJsonLd } from "../../seo";
 import { CategoryCatalogue } from "./category-catalogue";
 
 export const dynamic = "force-dynamic";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
+  const { slug } = await params;
+  const category = getCategory(slug);
+  if (!category) return { title: "Collection not found", robots: { index: false } };
+  const path = `/category/${category.slug}`;
+  const image = absoluteUrl(category.image);
+  return {
+    title: `${category.name} — 50% off MRP`,
+    description: category.description,
+    alternates: { canonical: path },
+    openGraph: {
+      type: "website",
+      title: `${category.name} · K1 Nuts`,
+      description: category.description,
+      url: path,
+      images: [{ url: image, alt: `${category.name} from K1 Nuts` }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: `${category.name} · K1 Nuts`,
+      description: category.description,
+      images: [image],
+    },
+  };
+}
 
 export default async function CategoryPage({
   params,
@@ -16,9 +48,32 @@ export default async function CategoryPage({
   const category = getCategory(slug);
   if (!category) notFound();
   const products = await getCategoryCatalogue(slug);
+  const collectionPath = `/category/${category.slug}`;
+  const collectionSchema = {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    name: category.name,
+    description: category.description,
+    url: absoluteUrl(collectionPath),
+    primaryImageOfPage: absoluteUrl(category.image),
+    mainEntity: {
+      "@type": "ItemList",
+      numberOfItems: products.length,
+      itemListElement: products.map((product, index) => ({
+        "@type": "ListItem",
+        position: index + 1,
+        name: product.name,
+        url: absoluteUrl(`/product/${product.slug}`),
+      })),
+    },
+  };
 
   return (
     <main className="brandSite categoryPage">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: safeJsonLd(collectionSchema) }}
+      />
       <StoreHeader />
       <section
         className="categoryHeroPro"

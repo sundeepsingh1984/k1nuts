@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { trackStoreEvent } from "../../analytics";
 import type { StoreProduct } from "../../store-data";
 import { CategoryAddButton } from "./product-actions";
 
@@ -37,6 +38,19 @@ export function CategoryCatalogue({ products }: { products: StoreProduct[] }) {
     return [...map.entries()];
   }, [filtered]);
 
+  useEffect(() => {
+    const searchTerm = query.trim();
+    if (searchTerm.length < 2) return;
+    const timer = window.setTimeout(() => {
+      trackStoreEvent("catalogue_search", window.location.pathname, {
+        searchTerm,
+        resultCount: filtered.length,
+        metadata: { category: products[0]?.categorySlug || "unknown" },
+      });
+    }, 650);
+    return () => window.clearTimeout(timer);
+  }, [filtered.length, products, query]);
+
   return (
     <section className="categoryCatalogue sectionNew">
       <header className="catalogueToolbar">
@@ -64,7 +78,13 @@ export function CategoryCatalogue({ products }: { products: StoreProduct[] }) {
             <span>SORT BY</span>
             <select
               value={sort}
-              onChange={(event) => setSort(event.target.value as SortMode)}
+              onChange={(event) => {
+                const nextSort = event.target.value as SortMode;
+                setSort(nextSort);
+                trackStoreEvent("catalogue_sort", window.location.pathname, {
+                  metadata: { sort: nextSort },
+                });
+              }}
             >
               <option value="featured">K1 featured</option>
               <option value="name">Name A–Z</option>

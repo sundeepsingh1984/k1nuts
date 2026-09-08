@@ -10,6 +10,7 @@ import {
   useMemo,
   useState,
 } from "react";
+import { trackStoreEvent } from "./analytics";
 import { formatInr, type StoreProduct } from "./store-data";
 
 type CartLine = { product: StoreProduct; quantity: number };
@@ -43,18 +44,18 @@ export function StorefrontProvider({
 
   const track = useCallback(
     (event: string, productSlug?: string) => {
-      fetch("/api/events", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ event, path: pathname, productSlug }),
-      }).catch(() => {});
+      trackStoreEvent(event, pathname, { productSlug });
     },
     [pathname],
   );
 
   useEffect(() => {
     track("page_view");
-  }, [track]);
+    const productSlug = pathname.match(/^\/product\/([^/]+)/)?.[1];
+    const categorySlug = pathname.match(/^\/category\/([^/]+)/)?.[1];
+    if (productSlug) track("product_view", productSlug);
+    if (categorySlug) track("category_view", categorySlug);
+  }, [pathname, track]);
 
   useEffect(() => {
     fetch("/api/account/session", { cache: "no-store" })

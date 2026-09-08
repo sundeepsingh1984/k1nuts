@@ -1,5 +1,5 @@
 import { and, desc, eq } from "drizzle-orm";
-import { getChatGPTUser } from "../../../chatgpt-auth";
+import { getAdminUser } from "../../../admin-auth";
 import { getDb } from "../../../../db";
 import {
   customerAddresses,
@@ -77,7 +77,7 @@ async function loadShippingOrder(orderId: number): Promise<ShippingOrder> {
 }
 
 export async function POST(request: Request) {
-  const user = await getChatGPTUser();
+  const user = await getAdminUser();
   if (!user)
     return Response.json(
       { error: "Authentication required." },

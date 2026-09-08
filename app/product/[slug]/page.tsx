@@ -1,11 +1,44 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { StoreFooter, StoreHeader } from "../../storefront-context";
 import { getCatalogueProduct } from "../../catalogue-db";
 import { ProductReviews } from "../../product-reviews";
+import { absoluteUrl, safeJsonLd } from "../../seo";
+import { getProductVariants } from "../../store-data";
 import { ProductPurchasePanel } from "./product-purchase-panel";
 
 export const dynamic = "force-dynamic";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
+  const { slug } = await params;
+  const product = await getCatalogueProduct(slug);
+  if (!product) return { title: "Product not found", robots: { index: false } };
+  const path = `/product/${product.slug}`;
+  const image = absoluteUrl(product.image || "/og.png");
+  return {
+    title: `${product.name} — 50% off MRP`,
+    description: product.description.slice(0, 155),
+    alternates: { canonical: path },
+    openGraph: {
+      type: "website",
+      title: `${product.name} · K1 Nuts`,
+      description: product.short,
+      url: path,
+      images: [{ url: image, alt: `${product.name} K1 branded packaging` }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: `${product.name} · K1 Nuts`,
+      description: product.short,
+      images: [image],
+    },
+  };
+}
 
 export default async function ProductPage({
   params,
@@ -21,9 +54,59 @@ export default async function ProductPage({
       : product.categorySlug === "healthy-snacks"
         ? "Freshness-sealed PET jar"
         : "Resealable premium pouch";
+  const productPath = `/product/${product.slug}`;
+  const productSchema = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: product.name,
+    description: product.description,
+    image: [absoluteUrl(product.image || "/og.png")],
+    sku: getProductVariants(product)[0]?.sku,
+    brand: { "@type": "Brand", name: "K1 Nuts" },
+    category: product.category,
+    offers: getProductVariants(product).map((variant) => ({
+      "@type": "Offer",
+      url: absoluteUrl(productPath),
+      priceCurrency: "INR",
+      price: variant.price.toFixed(2),
+      sku: variant.sku,
+      availability:
+        variant.stock > 0
+          ? "https://schema.org/InStock"
+          : "https://schema.org/OutOfStock",
+      itemCondition: "https://schema.org/NewCondition",
+    })),
+  };
+  const breadcrumbSchema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Home", item: absoluteUrl("/") },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: product.category,
+        item: absoluteUrl(`/category/${product.categorySlug}`),
+      },
+      {
+        "@type": "ListItem",
+        position: 3,
+        name: product.name,
+        item: absoluteUrl(productPath),
+      },
+    ],
+  };
 
   return (
     <main className="brandSite">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: safeJsonLd(productSchema) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: safeJsonLd(breadcrumbSchema) }}
+      />
       <StoreHeader />
       <section className="productDetail">
         <div

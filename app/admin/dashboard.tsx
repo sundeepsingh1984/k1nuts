@@ -14,7 +14,121 @@ type Activity = {
   event: string;
   path: string;
   productSlug?: string | null;
+  searchTerm?: string | null;
+  device?: string | null;
   createdAt: number;
+};
+
+type CampaignData = {
+  campaigns: Array<{
+    id: number;
+    name: string;
+    channel: "email" | "whatsapp";
+    subject: string | null;
+    status: string;
+    audienceCount: number;
+    sentCount: number;
+    failedCount: number;
+    createdAt: number;
+  }>;
+  audience: { email: number; whatsapp: number };
+  configuration: {
+    email: boolean;
+    whatsapp: boolean;
+    identity: {
+      chatgpt: boolean;
+      firebaseProjectConfigured: boolean;
+      externalLoginActive: boolean;
+    };
+  };
+  campaignLimit: number;
+};
+
+type GstData = {
+  period: string;
+  settings: {
+    enabled: boolean;
+    legalName: string;
+    tradeName: string;
+    gstin: string;
+    pan: string | null;
+    addressLine1: string;
+    addressLine2: string | null;
+    city: string;
+    stateName: string;
+    stateCode: string;
+    postalCode: string;
+    invoicePrefix: string;
+    eInvoiceApplicable: boolean;
+  };
+  taxProfiles: Array<{
+    productSlug: string;
+    hsnCode: string;
+    gstRateBps: number;
+    cessRateBps: number;
+    unitCode: string;
+  }>;
+  missingTaxProfiles: string[];
+  invoices: Array<{
+    id: number;
+    orderId: number;
+    invoiceNumber: string;
+    buyerLegalName: string;
+    totalPaise: number;
+    invoiceDate: number;
+    status: string;
+  }>;
+  summary: {
+    issuedInvoices: number;
+    taxableValuePaise: number;
+    cgstPaise: number;
+    sgstPaise: number;
+    igstPaise: number;
+    cessPaise: number;
+    grossTaxPaise: number;
+    invoiceValuePaise: number;
+    unadjustedReturns: number;
+    unadjustedReturnValuePaise: number;
+  };
+  gstr1: {
+    b2bInvoices: number;
+    b2clInvoices: number;
+    b2csInvoices: number;
+    documentsIssued: number;
+    hsnRows: Array<{
+      hsnCode: string;
+      gstRateBps: number;
+      unitCode: string;
+      quantity: number;
+      taxableValuePaise: number;
+      cgstPaise: number;
+      sgstPaise: number;
+      igstPaise: number;
+      cessPaise: number;
+    }>;
+  };
+  gstr3b: {
+    table31a: {
+      taxableValuePaise: number;
+      integratedTaxPaise: number;
+      centralTaxPaise: number;
+      stateTaxPaise: number;
+      cessPaise: number;
+    };
+    table31c: {
+      outwardValuePaise: number;
+    };
+  };
+  reconciliation: {
+    unadjustedReturns: Array<{
+      id: number;
+      orderId: number;
+      status: string;
+      amountPaise: number;
+      createdAt: number;
+    }>;
+    note: string;
+  };
 };
 
 type DashboardData = {
@@ -62,7 +176,45 @@ type DashboardData = {
     amountPaise: number;
     createdAt: number;
   }>;
-  integrations: { shiprocket: boolean; amazon: boolean };
+  insights: {
+    rangeDays: number;
+    topPages: Array<{ path: string; views: number; visitors: number }>;
+    topProducts: Array<{
+      product_slug: string;
+      views: number;
+      adds: number;
+      visitors: number;
+      units: number;
+    }>;
+    topSearches: Array<{
+      search_term: string;
+      searches: number;
+      average_results: number;
+      zero_results: number;
+    }>;
+    funnel: {
+      pageViews: number;
+      sessions: number;
+      productViews: number;
+      addToCarts: number;
+      checkouts: number;
+    };
+    performance: { lcpMs: number; ttfbMs: number; cls: number };
+    devices: Array<{ device: string; sessions: number }>;
+    seo: {
+      indexablePages: number;
+      productsWithDescriptions: number;
+      productsWithImages: number;
+      productCount: number;
+    };
+  };
+  integrations: {
+    shiprocket: boolean;
+    amazon: boolean;
+    email: boolean;
+    whatsapp: boolean;
+    identity: CampaignData["configuration"]["identity"];
+  };
 };
 
 const emptyData: DashboardData = {
@@ -79,7 +231,49 @@ const emptyData: DashboardData = {
   customProducts: [],
   orders: [],
   returns: [],
-  integrations: { shiprocket: false, amazon: false },
+  insights: {
+    rangeDays: 30,
+    topPages: [],
+    topProducts: [],
+    topSearches: [],
+    funnel: {
+      pageViews: 0,
+      sessions: 0,
+      productViews: 0,
+      addToCarts: 0,
+      checkouts: 0,
+    },
+    performance: { lcpMs: 0, ttfbMs: 0, cls: 0 },
+    devices: [],
+    seo: {
+      indexablePages: 1 + products.length,
+      productsWithDescriptions: products.length,
+      productsWithImages: products.length,
+      productCount: products.length,
+    },
+  },
+  integrations: {
+    shiprocket: false,
+    amazon: false,
+    email: false,
+    whatsapp: false,
+    identity: {
+      chatgpt: true,
+      firebaseProjectConfigured: false,
+      externalLoginActive: false,
+    },
+  },
+};
+
+const emptyCampaignData: CampaignData = {
+  campaigns: [],
+  audience: { email: 0, whatsapp: 0 },
+  configuration: {
+    email: false,
+    whatsapp: false,
+    identity: emptyData.integrations.identity,
+  },
+  campaignLimit: 250,
 };
 
 const demoActivity: Activity[] = [
@@ -105,6 +299,8 @@ export default function AdminDashboard({
 }) {
   const [activity, setActivity] = useState<Activity[]>(demoActivity);
   const [data, setData] = useState<DashboardData>(emptyData);
+  const [campaignData, setCampaignData] =
+    useState<CampaignData>(emptyCampaignData);
   const [tab, setTab] = useState("overview");
   const [toast, setToast] = useState("");
   const [renderedAt] = useState(Date.now);
@@ -112,6 +308,13 @@ export default function AdminDashboard({
   const loadDashboard = useCallback(async () => {
     const response = await fetch("/api/admin/dashboard", { cache: "no-store" });
     if (response.ok) setData((await response.json()) as DashboardData);
+  }, []);
+
+  const loadCampaigns = useCallback(async () => {
+    const response = await fetch("/api/admin/campaigns", {
+      cache: "no-store",
+    });
+    if (response.ok) setCampaignData((await response.json()) as CampaignData);
   }, []);
 
   useEffect(() => {
@@ -123,8 +326,12 @@ export default function AdminDashboard({
       .then((result) => result.events?.length && setActivity(result.events))
       .catch(() => undefined);
     const timer = window.setTimeout(() => void loadDashboard(), 0);
-    return () => window.clearTimeout(timer);
-  }, [loadDashboard]);
+    const campaignTimer = window.setTimeout(() => void loadCampaigns(), 0);
+    return () => {
+      window.clearTimeout(timer);
+      window.clearTimeout(campaignTimer);
+    };
+  }, [loadCampaigns, loadDashboard]);
 
   useEffect(() => {
     if (!toast) return;
@@ -145,12 +352,15 @@ export default function AdminDashboard({
         <nav>
           {[
             "overview",
+            "insights",
             "products",
             "orders",
+            "gst",
             "returns",
             "customers",
             "reviews",
             "offers",
+            "campaigns",
             "integrations",
           ].map((item) => (
             <button
@@ -193,7 +403,9 @@ export default function AdminDashboard({
           <AdminModule
             tab={tab}
             data={data}
+            campaignData={campaignData}
             reload={loadDashboard}
+            reloadCampaigns={loadCampaigns}
             setToast={setToast}
           />
         )}
@@ -332,15 +544,23 @@ function AdminOverview({
 function AdminModule({
   tab,
   data,
+  campaignData,
   reload,
+  reloadCampaigns,
   setToast,
 }: {
   tab: string;
   data: DashboardData;
+  campaignData: CampaignData;
   reload: () => Promise<void>;
+  reloadCampaigns: () => Promise<void>;
   setToast: (value: string) => void;
 }) {
   const labels: Record<string, [string, string]> = {
+    insights: [
+      "Growth & behaviour insights",
+      "Pages, product demand, searches, conversion, devices, speed and SEO.",
+    ],
     products: [
       "Product catalogue",
       "Add products, pack sizes, SKUs, stock and pricing.",
@@ -348,6 +568,10 @@ function AdminModule({
     orders: [
       "Order operations",
       "Create shipments and keep fulfilment moving.",
+    ],
+    gst: [
+      "GST & invoicing",
+      "Issue compliant tax invoices and prepare monthly outward-supply data.",
     ],
     returns: [
       "Returns intelligence",
@@ -365,9 +589,13 @@ function AdminModule({
       "Coupons & offers",
       "Store-wide 50% pricing and future campaign rules.",
     ],
+    campaigns: [
+      "Marketing campaigns",
+      "Reach only opted-in customers by email or approved WhatsApp templates.",
+    ],
     integrations: [
-      "Shipping integrations",
-      "Shiprocket and Amazon Shipping connection health.",
+      "Platform integrations",
+      "Shipping, campaign delivery and customer identity connection health.",
     ],
   };
   const [title, note] = labels[tab] ?? [tab, ""];
@@ -388,7 +616,9 @@ function AdminModule({
         )}
       </div>
 
-      {tab === "products" ? (
+      {tab === "insights" ? (
+        <InsightsPanel data={data} />
+      ) : tab === "products" ? (
         <>
           {showProductForm && (
             <ProductForm
@@ -403,10 +633,18 @@ function AdminModule({
         </>
       ) : tab === "orders" ? (
         <OrdersTable data={data} reload={reload} setToast={setToast} />
+      ) : tab === "gst" ? (
+        <GstPanel data={data} setToast={setToast} />
       ) : tab === "returns" ? (
         <ReturnsTable data={data} />
       ) : tab === "integrations" ? (
         <IntegrationPanel data={data} setToast={setToast} />
+      ) : tab === "campaigns" ? (
+        <CampaignPanel
+          data={campaignData}
+          reload={reloadCampaigns}
+          setToast={setToast}
+        />
       ) : tab === "customers" ? (
         <div className="emptyModule compact">
           <span>{data.metrics.customers}</span>
@@ -430,6 +668,449 @@ function AdminModule({
           </p>
         </div>
       )}
+    </div>
+  );
+}
+
+function percent(part: number, total: number) {
+  return total ? `${((part / total) * 100).toFixed(1)}%` : "0.0%";
+}
+
+function productLabel(slug: string) {
+  return (
+    products.find((product) => product.slug === slug)?.name ||
+    slug.replaceAll("-", " ")
+  );
+}
+
+function InsightsPanel({ data }: { data: DashboardData }) {
+  const { insights } = data;
+  const seoComplete = insights.seo.productCount
+    ? Math.round(
+        ((insights.seo.productsWithDescriptions +
+          insights.seo.productsWithImages) /
+          (insights.seo.productCount * 2)) *
+          100,
+      )
+    : 100;
+  const summary = [
+    ["SESSIONS", insights.funnel.sessions, `${insights.rangeDays} DAYS`],
+    ["PAGE VIEWS", insights.funnel.pageViews, "FIRST-PARTY"],
+    [
+      "CART RATE",
+      percent(insights.funnel.addToCarts, insights.funnel.productViews),
+      "PRODUCT → CART",
+    ],
+    ["SEO COVERAGE", `${seoComplete}%`, `${insights.seo.indexablePages} URLS`],
+  ];
+  const funnel = [
+    ["Store visits", insights.funnel.sessions],
+    ["Product views", insights.funnel.productViews],
+    ["Added to cart", insights.funnel.addToCarts],
+    ["Checkout starts", insights.funnel.checkouts],
+  ];
+
+  return (
+    <div className="insightsWorkspace">
+      <div className="insightSummary">
+        {summary.map(([label, value, note]) => (
+          <article key={String(label)}>
+            <small>{label}</small>
+            <b>{value}</b>
+            <span>{note}</span>
+          </article>
+        ))}
+      </div>
+
+      <div className="insightTopGrid">
+        <article className="funnelPanel">
+          <header>
+            <div>
+              <small>CONVERSION JOURNEY</small>
+              <h3>From visit to checkout</h3>
+            </div>
+            <span>LAST {insights.rangeDays} DAYS</span>
+          </header>
+          {funnel.map(([label, value], index) => (
+            <div className="funnelStep" key={String(label)}>
+              <span>{label}</span>
+              <i>
+                <b
+                  style={{
+                    width: `${Math.max(
+                      Number(value) ? 8 : 0,
+                      insights.funnel.sessions
+                        ? (Number(value) / insights.funnel.sessions) * 100
+                        : 0,
+                    )}%`,
+                  }}
+                />
+              </i>
+              <strong>{value}</strong>
+              {index > 0 && (
+                <em>
+                  {percent(Number(value), Number(funnel[index - 1][1]))}
+                </em>
+              )}
+            </div>
+          ))}
+        </article>
+        <article className="speedPanel">
+          <header>
+            <small>REAL-USER SPEED</small>
+            <h3>Core experience pulse</h3>
+          </header>
+          <div>
+            <span>
+              <b>{insights.performance.lcpMs || "—"}</b>
+              <small>ms · LCP</small>
+            </span>
+            <span>
+              <b>{insights.performance.ttfbMs || "—"}</b>
+              <small>ms · TTFB</small>
+            </span>
+            <span>
+              <b>{insights.performance.cls || "—"}</b>
+              <small>CLS</small>
+            </span>
+          </div>
+          <p>
+            Collected from real storefront sessions without third-party tracking
+            scripts or advertising cookies.
+          </p>
+        </article>
+      </div>
+
+      <div className="insightTables">
+        <InsightTable
+          title="Most visited pages"
+          columns={["PAGE", "VIEWS", "VISITORS"]}
+          rows={insights.topPages.map((row) => [
+            row.path,
+            row.views,
+            row.visitors,
+          ])}
+          empty="Page traffic will appear after visits."
+        />
+        <InsightTable
+          title="Product demand"
+          columns={["PRODUCT", "VIEWS", "CARTS", "SOLD"]}
+          rows={insights.topProducts.map((row) => [
+            productLabel(row.product_slug),
+            row.views,
+            row.adds,
+            row.units,
+          ])}
+          empty="Product interest will appear after shoppers browse."
+        />
+        <InsightTable
+          title="Search intelligence"
+          columns={["QUERY", "SEARCHES", "AVG RESULTS", "NO RESULT"]}
+          rows={insights.topSearches.map((row) => [
+            row.search_term,
+            row.searches,
+            row.average_results,
+            row.zero_results,
+          ])}
+          empty="Customer searches will appear here."
+        />
+      </div>
+
+      <div className="seoPanel">
+        <div>
+          <small>SEO READINESS</small>
+          <h3>{seoComplete}% catalogue coverage</h3>
+          <p>
+            Dynamic titles, descriptions, canonical links, Product schema,
+            category schema, sitemap and crawler controls are published.
+          </p>
+        </div>
+        <span>
+          <b>{insights.seo.productsWithDescriptions}</b>
+          descriptions
+        </span>
+        <span>
+          <b>{insights.seo.productsWithImages}</b>
+          product images
+        </span>
+        <span>
+          <b>{insights.seo.indexablePages}</b>
+          discoverable URLs
+        </span>
+      </div>
+    </div>
+  );
+}
+
+function InsightTable({
+  title,
+  columns,
+  rows,
+  empty,
+}: {
+  title: string;
+  columns: string[];
+  rows: Array<Array<string | number>>;
+  empty: string;
+}) {
+  return (
+    <article className="insightTable">
+      <h3>{title}</h3>
+      <div className="insightTableHead">
+        {columns.map((column) => (
+          <b key={column}>{column}</b>
+        ))}
+      </div>
+      {rows.length ? (
+        rows.slice(0, 8).map((row, index) => (
+          <div className="insightTableRow" key={`${row[0]}-${index}`}>
+            {row.map((cell, cellIndex) => (
+              <span key={`${cell}-${cellIndex}`}>{cell}</span>
+            ))}
+          </div>
+        ))
+      ) : (
+        <p className="insightEmpty">{empty}</p>
+      )}
+    </article>
+  );
+}
+
+function CampaignPanel({
+  data,
+  reload,
+  setToast,
+}: {
+  data: CampaignData;
+  reload: () => Promise<void>;
+  setToast: (value: string) => void;
+}) {
+  const [busy, setBusy] = useState(false);
+  const [form, setForm] = useState({
+    name: "",
+    channel: "email" as "email" | "whatsapp",
+    subject: "",
+    message: "",
+    templateName: "",
+    templateLanguage: "en_US",
+  });
+  const ready = data.configuration[form.channel];
+  const audience = data.audience[form.channel];
+
+  async function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const submitter = (event.nativeEvent as SubmitEvent)
+      .submitter as HTMLButtonElement | null;
+    const sendNow = submitter?.value === "send";
+    setBusy(true);
+    const response = await fetch("/api/admin/campaigns", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ ...form, sendNow }),
+    });
+    const result = (await response.json()) as {
+      error?: string;
+      savedAsDraft?: boolean;
+    };
+    setBusy(false);
+    if (!response.ok) {
+      setToast(result.error || "Campaign could not be saved");
+      return;
+    }
+    setToast(
+      result.savedAsDraft
+        ? `Draft saved · ${result.error}`
+        : sendNow
+          ? "Campaign delivery completed"
+          : "Campaign saved as draft",
+    );
+    setForm({ ...form, name: "", subject: "", message: "" });
+    await reload();
+  }
+
+  async function sendExisting(id: number) {
+    setBusy(true);
+    const response = await fetch("/api/admin/campaigns", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ campaignId: id, sendNow: true }),
+    });
+    const result = (await response.json()) as { error?: string };
+    setBusy(false);
+    setToast(
+      response.ok && !result.error
+        ? "Campaign delivery completed"
+        : result.error || "Campaign could not be sent",
+    );
+    await reload();
+  }
+
+  return (
+    <div className="campaignWorkspace">
+      <div className="campaignAudience">
+        <article>
+          <small>EMAIL AUDIENCE</small>
+          <b>{data.audience.email}</b>
+          <span>explicitly opted in</span>
+        </article>
+        <article>
+          <small>WHATSAPP AUDIENCE</small>
+          <b>{data.audience.whatsapp}</b>
+          <span>phone + channel consent</span>
+        </article>
+        <article>
+          <small>SAFE RUN LIMIT</small>
+          <b>{data.campaignLimit}</b>
+          <span>recipients per campaign</span>
+        </article>
+      </div>
+      <form className="campaignComposer" onSubmit={submit}>
+        <header>
+          <div>
+            <small>NEW CAMPAIGN</small>
+            <h3>Compose a customer message</h3>
+          </div>
+          <span className={ready ? "ready" : ""}>
+            {ready ? "DELIVERY READY" : "PROVIDER SETUP REQUIRED"}
+          </span>
+        </header>
+        <div className="campaignFormGrid">
+          <label>
+            Campaign name
+            <input
+              value={form.name}
+              onChange={(event) => setForm({ ...form, name: event.target.value })}
+              placeholder="September pantry offer"
+              required
+            />
+          </label>
+          <label>
+            Channel
+            <select
+              value={form.channel}
+              onChange={(event) =>
+                setForm({
+                  ...form,
+                  channel: event.target.value as "email" | "whatsapp",
+                })
+              }
+            >
+              <option value="email">Email</option>
+              <option value="whatsapp">WhatsApp</option>
+            </select>
+          </label>
+          {form.channel === "email" ? (
+            <label className="wide">
+              Email subject
+              <input
+                value={form.subject}
+                onChange={(event) =>
+                  setForm({ ...form, subject: event.target.value })
+                }
+                placeholder="Goodness for your September pantry"
+                required
+              />
+            </label>
+          ) : (
+            <>
+              <label>
+                Approved template name
+                <input
+                  value={form.templateName}
+                  onChange={(event) =>
+                    setForm({ ...form, templateName: event.target.value })
+                  }
+                  placeholder="k1_monthly_offer"
+                  required
+                />
+              </label>
+              <label>
+                Template language
+                <input
+                  value={form.templateLanguage}
+                  onChange={(event) =>
+                    setForm({ ...form, templateLanguage: event.target.value })
+                  }
+                  required
+                />
+              </label>
+            </>
+          )}
+          <label className="wide">
+            Message {form.channel === "whatsapp" && "· template body variable"}
+            <textarea
+              value={form.message}
+              onChange={(event) =>
+                setForm({ ...form, message: event.target.value })
+              }
+              placeholder="Share the offer, benefit and one clear next step."
+              maxLength={1800}
+              required
+            />
+          </label>
+        </div>
+        <div className="campaignActions">
+          <p>
+            Audience now: <b>{audience}</b>. Sending respects saved consent and
+            never exposes provider credentials to the browser.
+          </p>
+          <button name="campaignAction" value="draft" disabled={busy}>
+            SAVE DRAFT
+          </button>
+          <button
+            className="adminPrimary"
+            name="campaignAction"
+            value="send"
+            disabled={busy}
+          >
+            {busy
+              ? "WORKING…"
+              : ready
+                ? `SEND TO ${audience} CUSTOMERS →`
+                : "SAVE + REVIEW SETUP →"}
+          </button>
+        </div>
+      </form>
+
+      <div className="campaignHistory">
+        <header>
+          <h3>Campaign history</h3>
+          <span>{data.campaigns.length} RECENT</span>
+        </header>
+        {data.campaigns.length ? (
+          data.campaigns.map((campaign) => (
+            <article key={campaign.id}>
+              <div>
+                <small>{campaign.channel.toUpperCase()}</small>
+                <b>{campaign.name}</b>
+                <span>
+                  {new Date(campaign.createdAt).toLocaleDateString("en-IN")}
+                </span>
+              </div>
+              <div>
+                <small>AUDIENCE</small>
+                <b>{campaign.audienceCount}</b>
+              </div>
+              <div>
+                <small>DELIVERED / FAILED</small>
+                <b>
+                  {campaign.sentCount} / {campaign.failedCount}
+                </b>
+              </div>
+              <span className={`campaignStatus ${campaign.status}`}>
+                {campaign.status}
+              </span>
+              {["draft", "failed"].includes(campaign.status) && (
+                <button disabled={busy} onClick={() => sendExisting(campaign.id)}>
+                  SEND NOW
+                </button>
+              )}
+            </article>
+          ))
+        ) : (
+          <p className="insightEmpty">Your first campaign will appear here.</p>
+        )}
+      </div>
     </div>
   );
 }
@@ -673,6 +1354,359 @@ function ProductForm({ onSaved }: { onSaved: (message: string) => void }) {
   );
 }
 
+function GstPanel({
+  data,
+  setToast,
+}: {
+  data: DashboardData;
+  setToast: (value: string) => void;
+}) {
+  const [period, setPeriod] = useState(new Date().toISOString().slice(0, 7));
+  const [gst, setGst] = useState<GstData | null>(null);
+  const [settings, setSettings] = useState<GstData["settings"] | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [taxDraft, setTaxDraft] = useState({
+    target: `product:${products[0]?.slug || ""}`,
+    hsnCode: "",
+    gstRate: 5,
+    cessRate: 0,
+    classificationNote: "",
+  });
+  const allProducts = [
+    ...products.map((product) => ({
+      slug: product.slug,
+      name: product.name,
+      categorySlug: product.categorySlug,
+    })),
+    ...data.customProducts.map((product) => ({
+      slug: product.slug,
+      name: product.name,
+      categorySlug: product.categorySlug,
+    })),
+  ];
+
+  const load = useCallback(async () => {
+    const response = await fetch(`/api/admin/gst?period=${period}`, {
+      cache: "no-store",
+    });
+    const result = (await response.json()) as GstData & { error?: string };
+    if (!response.ok) {
+      setToast(result.error || "GST report could not be loaded");
+      return;
+    }
+    setGst(result);
+    setSettings(result.settings);
+  }, [period, setToast]);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => void load(), 0);
+    return () => window.clearTimeout(timer);
+  }, [load]);
+
+  async function saveSettings(event: FormEvent) {
+    event.preventDefault();
+    if (!settings) return;
+    setBusy(true);
+    const response = await fetch("/api/admin/gst", {
+      method: "PUT",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(settings),
+    });
+    const result = (await response.json()) as { error?: string };
+    setBusy(false);
+    setToast(response.ok ? "GST business settings saved" : result.error || "Unable to save GST settings");
+    if (response.ok) await load();
+  }
+
+  async function saveTaxProfile(event: FormEvent) {
+    event.preventDefault();
+    const [scope, value] = taxDraft.target.split(":");
+    const productSlugs =
+      scope === "category"
+        ? allProducts
+            .filter((product) => product.categorySlug === value)
+            .map((product) => product.slug)
+        : [value];
+    setBusy(true);
+    const response = await fetch("/api/admin/gst", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ ...taxDraft, productSlugs }),
+    });
+    const result = (await response.json()) as {
+      error?: string;
+      updatedProducts?: number;
+    };
+    setBusy(false);
+    setToast(
+      response.ok
+        ? `${result.updatedProducts} tax classification${result.updatedProducts === 1 ? "" : "s"} verified`
+        : result.error || "Unable to save tax classification",
+    );
+    if (response.ok) await load();
+  }
+
+  async function issueInvoice(orderId: number) {
+    setBusy(true);
+    const response = await fetch("/api/admin/gst/invoices", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ orderId }),
+    });
+    const result = (await response.json()) as {
+      error?: string;
+      invoice?: { invoiceNumber: string };
+    };
+    setBusy(false);
+    setToast(
+      response.ok
+        ? `Tax invoice ${result.invoice?.invoiceNumber} issued`
+        : result.error || "Invoice could not be issued",
+    );
+    if (response.ok) await load();
+  }
+
+  if (!gst || !settings) {
+    return <div className="accountSkeleton">Preparing GST ledger…</div>;
+  }
+  const invoicedOrders = new Set(gst.invoices.map((invoice) => invoice.orderId));
+  const invoiceCandidates = data.orders.filter(
+    (order) => order.paymentStatus === "paid" && !invoicedOrders.has(order.id),
+  );
+  const summary = [
+    ["GST COLLECTED", `₹${formatInr(gst.summary.grossTaxPaise / 100)}`, period],
+    ["TAXABLE SALES", `₹${formatInr(gst.summary.taxableValuePaise / 100)}`, "OUTWARD"],
+    ["INVOICES", String(gst.summary.issuedInvoices), "ISSUED"],
+    ["GROSS SALES", `₹${formatInr(gst.summary.invoiceValuePaise / 100)}`, "TAX INCLUSIVE"],
+  ];
+
+  return (
+    <div className="gstWorkspace">
+      <div className="gstToolbar">
+        <label>
+          RETURN PERIOD
+          <input type="month" value={period} onChange={(event) => setPeriod(event.target.value)} />
+        </label>
+        <div>
+          <a href={`/api/admin/gst?period=${period}&download=csv`}>
+            DOWNLOAD GST WORKING CSV
+          </a>
+          <a href={`/api/admin/gst?period=${period}&download=json`}>
+            DOWNLOAD JSON
+          </a>
+        </div>
+      </div>
+      <div className="insightSummary gstSummary">
+        {summary.map(([label, value, note]) => (
+          <article key={label}>
+            <small>{label}</small>
+            <b>{value}</b>
+            <span>{note}</span>
+          </article>
+        ))}
+      </div>
+      <div className="gstReturnGrid">
+        <article>
+          <small>GSTR-3B · TABLE 3.1(a)</small>
+          <h3>Outward taxable supplies</h3>
+          {[
+            ["Taxable value", gst.gstr3b.table31a.taxableValuePaise],
+            ["Integrated tax", gst.gstr3b.table31a.integratedTaxPaise],
+            ["Central tax", gst.gstr3b.table31a.centralTaxPaise],
+            ["State tax", gst.gstr3b.table31a.stateTaxPaise],
+            ["Cess", gst.gstr3b.table31a.cessPaise],
+            ["Nil / exempt outward · 3.1(c)", gst.gstr3b.table31c.outwardValuePaise],
+          ].map(([label, value]) => (
+            <p key={String(label)}>
+              <span>{label}</span>
+              <b>₹{formatInr(Number(value) / 100)}</b>
+            </p>
+          ))}
+        </article>
+        <article>
+          <small>GSTR-1 · OUTWARD SUPPLIES</small>
+          <h3>Invoice reporting map</h3>
+          <p><span>B2B invoice level</span><b>{gst.gstr1.b2bInvoices}</b></p>
+          <p><span>B2C large · inter-state over ₹1 lakh</span><b>{gst.gstr1.b2clInvoices}</b></p>
+          <p><span>B2C other · state/rate summary</span><b>{gst.gstr1.b2csInvoices}</b></p>
+          <p><span>Documents issued</span><b>{gst.gstr1.documentsIssued}</b></p>
+        </article>
+        <article className="gstReadiness">
+          <small>FILING READINESS</small>
+          <h3>{gst.missingTaxProfiles.length ? "Action required" : "Tax masters ready"}</h3>
+          <p>
+            {gst.missingTaxProfiles.length
+              ? `${gst.missingTaxProfiles.length} catalogue products still need a verified HSN and rate.`
+              : "Every current catalogue product has a saved tax classification."}
+          </p>
+          <strong>{settings.enabled ? "GST INVOICING ENABLED" : "GST SETTINGS NOT ENABLED"}</strong>
+        </article>
+      </div>
+
+      {gst.summary.unadjustedReturns > 0 && (
+        <section className="gstReconciliationAlert">
+          <div>
+            <small>RETURN / CREDIT-NOTE RECONCILIATION</small>
+            <h3>
+              {gst.summary.unadjustedReturns} return
+              {gst.summary.unadjustedReturns === 1 ? "" : "s"} need tax review
+            </h3>
+            <p>{gst.reconciliation.note}</p>
+          </div>
+          <strong>
+            ₹{formatInr(gst.summary.unadjustedReturnValuePaise / 100)} NOT
+            NETTED
+          </strong>
+        </section>
+      )}
+
+      <section className="gstConfigGrid">
+        <form className="gstSettings" onSubmit={saveSettings}>
+          <header>
+            <div>
+              <small>BUSINESS TAX IDENTITY</small>
+              <h3>Invoice settings</h3>
+            </div>
+            <label className="gstToggle">
+              <input
+                type="checkbox"
+                checked={settings.enabled}
+                onChange={(event) => setSettings({ ...settings, enabled: event.target.checked })}
+              />
+              Enable issuing
+            </label>
+          </header>
+          <div className="gstFormGrid">
+            {([
+              ["legalName", "GST legal name"],
+              ["tradeName", "Trade name"],
+              ["gstin", "GSTIN"],
+              ["pan", "PAN"],
+              ["addressLine1", "Registered address"],
+              ["addressLine2", "Address line 2"],
+              ["city", "City"],
+              ["stateName", "State / UT"],
+              ["stateCode", "GST state code"],
+              ["postalCode", "PIN code"],
+              ["invoicePrefix", "Invoice prefix · max 4"],
+            ] as const).map(([field, label]) => (
+              <label key={field} className={field.startsWith("address") ? "wide" : ""}>
+                {label}
+                <input
+                  value={settings[field] ?? ""}
+                  onChange={(event) =>
+                    setSettings({ ...settings, [field]: event.target.value })
+                  }
+                  maxLength={field === "gstin" ? 15 : field === "invoicePrefix" ? 4 : undefined}
+                />
+              </label>
+            ))}
+          </div>
+          <label className="gstComplianceCheck">
+            <input
+              type="checkbox"
+              checked={settings.eInvoiceApplicable}
+              onChange={(event) =>
+                setSettings({ ...settings, eInvoiceApplicable: event.target.checked })
+              }
+            />
+            This GSTIN is covered by the B2B e-invoice mandate. B2B invoice issue will stay blocked until an authorised IRP/GSP returns the IRN and signed QR code.
+          </label>
+          <button className="adminPrimary" disabled={busy}>SAVE GST SETTINGS</button>
+        </form>
+
+        <form className="gstTaxMaster" onSubmit={saveTaxProfile}>
+          <header>
+            <small>PRODUCT TAX MASTER</small>
+            <h3>Verify HSN and GST rate</h3>
+            <p>Rates vary by classification and product condition. Save only a CA-verified classification.</p>
+          </header>
+          <label>
+            Apply to
+            <select value={taxDraft.target} onChange={(event) => setTaxDraft({ ...taxDraft, target: event.target.value })}>
+              <optgroup label="One product">
+                {allProducts.map((product) => (
+                  <option value={`product:${product.slug}`} key={product.slug}>{product.name}</option>
+                ))}
+              </optgroup>
+              <optgroup label="Entire category">
+                {categories.map((category) => (
+                  <option value={`category:${category.slug}`} key={category.slug}>{category.name} · all products</option>
+                ))}
+              </optgroup>
+            </select>
+          </label>
+          <div className="gstRateGrid">
+            <label>
+              HSN code
+              <input value={taxDraft.hsnCode} onChange={(event) => setTaxDraft({ ...taxDraft, hsnCode: event.target.value.replace(/\D/g, "") })} minLength={4} maxLength={8} required />
+            </label>
+            <label>
+              GST %
+              <select value={taxDraft.gstRate} onChange={(event) => setTaxDraft({ ...taxDraft, gstRate: Number(event.target.value) })}>
+                {[0, 5, 12, 18, 28, 40].map((rate) => <option value={rate} key={rate}>{rate}%</option>)}
+              </select>
+            </label>
+            <label>
+              Cess %
+              <input type="number" min="0" max="100" step="0.01" value={taxDraft.cessRate} onChange={(event) => setTaxDraft({ ...taxDraft, cessRate: Number(event.target.value) })} />
+            </label>
+            <div className="gstFixedUqc">
+              <small>UQC</small>
+              <b>NOS</b>
+              <span>Retail pack count; pack size remains on each invoice line.</span>
+            </div>
+          </div>
+          <label>
+            Classification note / CA reference
+            <textarea value={taxDraft.classificationNote} onChange={(event) => setTaxDraft({ ...taxDraft, classificationNote: event.target.value })} placeholder="Why this HSN and rate applies" />
+          </label>
+          <button className="adminPrimary" disabled={busy}>VERIFY TAX CLASSIFICATION →</button>
+        </form>
+      </section>
+
+      <section className="gstInvoiceDesk">
+        <header>
+          <div>
+            <small>INVOICE CONTROL</small>
+            <h3>Paid orders awaiting invoice</h3>
+          </div>
+          <span>{invoiceCandidates.length} READY</span>
+        </header>
+        {invoiceCandidates.length ? invoiceCandidates.map((order) => (
+          <article key={order.id}>
+            <div><small>ORDER</small><b>{order.orderNumber}</b></div>
+            <div><small>VALUE</small><b>₹{formatInr(order.totalPaise / 100)}</b></div>
+            <div><small>PLACED</small><b>{new Date(order.placedAt).toLocaleDateString("en-IN")}</b></div>
+            <button disabled={busy} onClick={() => issueInvoice(order.id)}>ISSUE TAX INVOICE</button>
+          </article>
+        )) : <p className="insightEmpty">No paid orders are waiting for an invoice.</p>}
+      </section>
+
+      <section className="gstInvoiceDesk">
+        <header>
+          <div>
+            <small>MONTHLY REGISTER</small>
+            <h3>Issued tax invoices</h3>
+          </div>
+          <span>{gst.invoices.length} DOCUMENTS</span>
+        </header>
+        {gst.invoices.map((invoice) => (
+          <article key={invoice.id}>
+            <div><small>INVOICE</small><b>{invoice.invoiceNumber}</b></div>
+            <div><small>RECIPIENT</small><b>{invoice.buyerLegalName}</b></div>
+            <div><small>VALUE</small><b>₹{formatInr(invoice.totalPaise / 100)}</b></div>
+            <Link href={`/invoice/${invoice.id}`}>VIEW / PRINT ↗</Link>
+          </article>
+        ))}
+      </section>
+      <p className="gstDisclaimer">
+        Working exports support reconciliation and return preparation. Review them with your tax professional and use the latest GST Offline Utility or an authorised GSP for portal filing; this module does not submit a return or claim filing success.
+      </p>
+    </div>
+  );
+}
+
 function OrdersTable({
   data,
   reload,
@@ -830,46 +1864,104 @@ function IntegrationPanel({
     );
   }
 
-  const cards = [
+  const cards: Array<{
+    key: "shiprocket" | "amazon" | "email" | "whatsapp";
+    type: string;
+    name: string;
+    note: string;
+  }> = [
     {
-      key: "shiprocket" as const,
+      key: "shiprocket",
+      type: "SHIPPING API",
       name: "Shiprocket",
       note: "Create external orders, assign AWBs and synchronize tracking.",
     },
     {
-      key: "amazon" as const,
+      key: "amazon",
+      type: "SHIPPING API",
       name: "Amazon Shipping",
       note: "LWA authorization, Shipping V2 rates, purchase and tracking.",
     },
+    {
+      key: "email",
+      type: "CAMPAIGN DELIVERY",
+      name: "Email · Resend",
+      note: "Server-side batch delivery to customers with saved email consent.",
+    },
+    {
+      key: "whatsapp",
+      type: "CAMPAIGN DELIVERY",
+      name: "WhatsApp Cloud API",
+      note: "Approved message templates for customers with channel-specific consent.",
+    },
   ];
   return (
-    <div className="integrationGrid integrationGridPro">
-      {cards.map((card) => (
-        <article key={card.key}>
-          <div
-            className={`integrationState ${data.integrations[card.key] ? "ready" : ""}`}
-          >
-            <i />{" "}
-            {data.integrations[card.key]
-              ? "CREDENTIALS READY"
-              : "SETUP REQUIRED"}
-          </div>
-          <small>SHIPPING API</small>
-          <h3>{card.name}</h3>
-          <p>{card.note}</p>
-          <ul>
-            <li>Secrets remain server-side</li>
-            <li>Live API errors are surfaced to operations</li>
-            <li>Tracking updates customer order history</li>
-          </ul>
-          <button onClick={() => test(card.key)}>
-            {data.integrations[card.key]
-              ? "TEST CONNECTION"
-              : "VIEW REQUIRED SETUP"}{" "}
-            →
-          </button>
-        </article>
-      ))}
+    <div className="integrationWorkspace">
+      <div className="integrationGrid integrationGridPro">
+        {cards.map((card) => (
+          <article key={card.key}>
+            <div
+              className={`integrationState ${data.integrations[card.key] ? "ready" : ""}`}
+            >
+              <i />{" "}
+              {data.integrations[card.key]
+                ? "CREDENTIALS READY"
+                : "SETUP REQUIRED"}
+            </div>
+            <small>{card.type}</small>
+            <h3>{card.name}</h3>
+            <p>{card.note}</p>
+            <ul>
+              <li>Secrets remain server-side</li>
+              <li>Consent-aware customer selection</li>
+              <li>Provider outcomes remain visible to operations</li>
+            </ul>
+            <button
+              onClick={() =>
+                card.key === "shiprocket" || card.key === "amazon"
+                  ? test(card.key)
+                  : setToast(
+                      data.integrations[card.key]
+                        ? `${card.name} is ready for campaigns`
+                        : `${card.name} server credentials are required`,
+                    )
+              }
+            >
+              {data.integrations[card.key]
+                ? card.key === "shiprocket" || card.key === "amazon"
+                  ? "TEST CONNECTION"
+                  : "READY TO USE"
+                : "VIEW REQUIRED SETUP"}{" "}
+              →
+            </button>
+          </article>
+        ))}
+      </div>
+      <section className="identityIntegration">
+        <div>
+          <small>CUSTOMER IDENTITY</small>
+          <h3>Secure sign-in paths</h3>
+          <p>
+            Checkout and account data currently use the Sites platform&apos;s
+            secure ChatGPT identity. Google and mobile OTP need an external
+            identity tenant plus a public-site authentication path before they
+            can be activated safely.
+          </p>
+        </div>
+        <span className="ready">
+          <i /> CHATGPT SIGN-IN ACTIVE
+        </span>
+        <span
+          className={
+            data.integrations.identity.firebaseProjectConfigured ? "ready" : ""
+          }
+        >
+          <i /> GOOGLE + PHONE PROVIDER{" "}
+          {data.integrations.identity.firebaseProjectConfigured
+            ? "CONFIGURED · ACTIVATION PENDING"
+            : "SETUP REQUIRED"}
+        </span>
+      </section>
     </div>
   );
 }

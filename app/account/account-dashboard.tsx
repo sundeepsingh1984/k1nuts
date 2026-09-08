@@ -7,7 +7,10 @@ type Profile = {
   displayName: string;
   email: string;
   phone: string | null;
+  billingLegalName: string | null;
+  billingGstin: string | null;
   marketingOptIn: boolean;
+  whatsappMarketingOptIn: boolean;
 };
 type Address = {
   id: number;
@@ -41,6 +44,11 @@ type Order = {
   placedAt: number;
   updatedAt: number;
   items: OrderItem[];
+  invoice: {
+    id: number;
+    invoiceNumber: string;
+    status: string;
+  } | null;
 };
 type AccountData = {
   profile: Profile;
@@ -94,7 +102,10 @@ export function AccountDashboard({
   const [profile, setProfile] = useState({
     displayName: authenticatedUser.displayName,
     phone: "",
+    billingLegalName: "",
+    billingGstin: "",
     marketingOptIn: false,
+    whatsappMarketingOptIn: false,
   });
   const [addressDraft, setAddressDraft] = useState(emptyAddress);
   const [editingAddressId, setEditingAddressId] = useState<number | null>(null);
@@ -110,7 +121,10 @@ export function AccountDashboard({
     setProfile({
       displayName: next.profile.displayName,
       phone: next.profile.phone ?? "",
+      billingLegalName: next.profile.billingLegalName ?? "",
+      billingGstin: next.profile.billingGstin ?? "",
       marketingOptIn: next.profile.marketingOptIn,
+      whatsappMarketingOptIn: next.profile.whatsappMarketingOptIn,
     });
   }, []);
 
@@ -290,8 +304,35 @@ export function AccountDashboard({
                   inputMode="tel"
                 />
               </label>
+              <label>
+                Billing legal name · optional
+                <input
+                  value={profile.billingLegalName}
+                  onChange={(event) =>
+                    setProfile({
+                      ...profile,
+                      billingLegalName: event.target.value,
+                    })
+                  }
+                  placeholder="For business invoices"
+                />
+              </label>
+              <label>
+                GSTIN · optional
+                <input
+                  value={profile.billingGstin}
+                  onChange={(event) =>
+                    setProfile({
+                      ...profile,
+                      billingGstin: event.target.value.toUpperCase(),
+                    })
+                  }
+                  placeholder="15-character GSTIN"
+                  maxLength={15}
+                />
+              </label>
             </div>
-            <label className="accountCheck">
+            <label className="accountCheck consentCheck">
               <input
                 type="checkbox"
                 checked={profile.marketingOptIn}
@@ -302,7 +343,22 @@ export function AccountDashboard({
                   })
                 }
               />
-              Send me thoughtful offers and new-arrival notes from K1.
+              Email me K1 offers, new arrivals and useful product notes. I can
+              opt out here at any time.
+            </label>
+            <label className="accountCheck consentCheck">
+              <input
+                type="checkbox"
+                checked={profile.whatsappMarketingOptIn}
+                onChange={(event) =>
+                  setProfile({
+                    ...profile,
+                    whatsappMarketingOptIn: event.target.checked,
+                  })
+                }
+              />
+              Send K1 offers and recommendations to my saved number on
+              WhatsApp. I can opt out here or by replying STOP.
             </label>
             <button className="brandButton" disabled={busy}>
               {busy ? "SAVING…" : "SAVE PROFILE →"}
@@ -527,6 +583,14 @@ function OrderGroup({ title, orders }: { title: string; orders: Order[] }) {
                     TRACK LIVE ↗
                   </a>
                 )}
+              </footer>
+            )}
+            {order.invoice && (
+              <footer className="orderInvoiceLink">
+                <span>Tax invoice · {order.invoice.invoiceNumber}</span>
+                <Link href={`/invoice/${order.invoice.id}`}>
+                  VIEW / SAVE PDF ↗
+                </Link>
               </footer>
             )}
           </article>

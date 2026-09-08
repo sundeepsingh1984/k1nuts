@@ -5361,3 +5361,1149 @@ a {
     animation: none !important;
   }
 }
+
+/* Production analytics, campaigns and responsive operations */
+.adminSide {
+  overflow-y: auto;
+}
+.adminSide nav button {
+  min-height: 44px;
+  font-size: 12px;
+}
+.adminSide nav button span {
+  font-size: 11px;
+}
+.adminMain > header small,
+.moduleHead small,
+.adminHero small,
+.metricGrid small,
+.trafficChart > div span,
+.liveActivity > div span,
+.liveActivity > p small,
+.liveActivity em,
+.integrationState {
+  font-size: 10px;
+}
+.adminHero p,
+.moduleHead p,
+.integrationGridPro ul {
+  font-size: 13px;
+  line-height: 1.6;
+}
+.consentCheck {
+  max-width: 760px;
+  align-items: flex-start;
+  line-height: 1.5;
+}
+
+.insightsWorkspace,
+.campaignWorkspace,
+.integrationWorkspace {
+  display: grid;
+  gap: 18px;
+}
+.insightSummary,
+.campaignAudience {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+.campaignAudience {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.insightSummary article,
+.campaignAudience article {
+  min-height: 150px;
+  padding: 24px;
+  border: 1px solid #e0e4e0;
+  border-radius: 12px;
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+.insightSummary small,
+.campaignAudience small,
+.funnelPanel small,
+.speedPanel small,
+.seoPanel small,
+.campaignComposer small,
+.campaignHistory small,
+.identityIntegration small {
+  color: #758178;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+}
+.insightSummary b,
+.campaignAudience b {
+  font: 600 37px var(--font-display);
+}
+.insightSummary span,
+.campaignAudience span {
+  color: #718078;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+}
+.insightTopGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(300px, 0.65fr);
+  gap: 12px;
+}
+.funnelPanel,
+.speedPanel,
+.insightTable,
+.seoPanel,
+.campaignComposer,
+.campaignHistory,
+.identityIntegration {
+  border: 1px solid #e0e4e0;
+  border-radius: 12px;
+  background: #fff;
+}
+.funnelPanel,
+.speedPanel {
+  padding: 28px;
+}
+.funnelPanel > header,
+.speedPanel > header,
+.campaignComposer > header,
+.campaignHistory > header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+.funnelPanel h3,
+.speedPanel h3,
+.insightTable h3,
+.seoPanel h3,
+.campaignComposer h3,
+.campaignHistory h3,
+.identityIntegration h3 {
+  margin: 5px 0 0;
+  font: 600 27px var(--font-display);
+}
+.funnelPanel > header > span,
+.campaignHistory > header > span {
+  color: #718078;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+}
+.funnelStep {
+  display: grid;
+  grid-template-columns: 130px 1fr 45px 55px;
+  align-items: center;
+  gap: 12px;
+  min-height: 43px;
+  font-size: 13px;
+}
+.funnelStep i {
+  display: block;
+  height: 8px;
+  overflow: hidden;
+  border-radius: 99px;
+  background: #edf0ee;
+}
+.funnelStep i b {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #b7d341, #d7ed65);
+}
+.funnelStep strong {
+  text-align: right;
+}
+.funnelStep em {
+  color: #6f7e74;
+  font-size: 10px;
+  font-style: normal;
+}
+.speedPanel {
+  color: #edf5ef;
+  border-color: #21362a;
+  background: #21362a;
+}
+.speedPanel small {
+  color: #b6c7bb;
+}
+.speedPanel > div {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+.speedPanel > div span {
+  min-width: 0;
+  padding: 15px 9px;
+  border: 1px solid #42564a;
+  border-radius: 8px;
+}
+.speedPanel > div b,
+.speedPanel > div small {
+  display: block;
+}
+.speedPanel > div b {
+  font: 600 25px var(--font-display);
+}
+.speedPanel p {
+  margin: 22px 0 0;
+  color: #adc0b2;
+  font-size: 12px;
+  line-height: 1.55;
+}
+.insightTables {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+.insightTable {
+  min-width: 0;
+  overflow: hidden;
+  padding: 24px;
+}
+.insightTable h3 {
+  margin: 0 0 18px;
+}
+.insightTableHead,
+.insightTableRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.insightTableHead {
+  padding-bottom: 9px;
+  border-bottom: 1px solid #e1e5e2;
+}
+.insightTableHead b,
+.insightTableRow span {
+  width: 67px;
+  text-align: right;
+  font-size: 10px;
+}
+.insightTableHead b:first-child,
+.insightTableRow span:first-child {
+  width: auto;
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.insightTableHead b {
+  color: #76837b;
+  font-size: 9px;
+  letter-spacing: 0.06em;
+}
+.insightTableRow {
+  min-height: 42px;
+  border-bottom: 1px solid #f0f2f0;
+}
+.insightTableRow span:first-child {
+  text-transform: capitalize;
+}
+.insightEmpty {
+  margin: 0;
+  padding: 28px 0;
+  color: #76837b;
+  font-size: 13px;
+}
+.seoPanel {
+  display: grid;
+  grid-template-columns: minmax(250px, 1fr) repeat(3, 135px);
+  align-items: center;
+  gap: 20px;
+  padding: 28px;
+}
+.seoPanel p {
+  max-width: 650px;
+  color: #67766d;
+  font-size: 13px;
+  line-height: 1.55;
+}
+.seoPanel > span {
+  color: #718078;
+  font-size: 11px;
+}
+.seoPanel > span b {
+  display: block;
+  color: #253128;
+  font: 600 30px var(--font-display);
+}
+
+.campaignComposer {
+  padding: 30px;
+}
+.campaignComposer > header > span {
+  padding: 9px 12px;
+  border-radius: 99px;
+  color: #8f652b;
+  background: #f4e9d4;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+}
+.campaignComposer > header > span.ready {
+  color: #48633f;
+  background: #eaf3df;
+}
+.campaignFormGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+.campaignFormGrid label {
+  display: grid;
+  gap: 8px;
+  color: #526158;
+  font-size: 12px;
+  font-weight: 600;
+}
+.campaignFormGrid label.wide {
+  grid-column: 1 / -1;
+}
+.campaignFormGrid input,
+.campaignFormGrid select,
+.campaignFormGrid textarea {
+  width: 100%;
+  min-height: 46px;
+  padding: 12px 13px;
+  border: 1px solid #d7ddd9;
+  border-radius: 7px;
+  color: #253128;
+  background: #fbfcfb;
+  font: 14px var(--font-sans);
+}
+.campaignFormGrid textarea {
+  min-height: 145px;
+  resize: vertical;
+}
+.campaignActions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 10px;
+  margin-top: 18px;
+}
+.campaignActions p {
+  margin-right: auto;
+  color: #67766d;
+  font-size: 12px;
+}
+.campaignActions button,
+.campaignHistory article > button {
+  min-height: 42px;
+  padding: 0 16px;
+  border: 1px solid #cad2cd;
+  color: #253128;
+  background: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+.campaignActions .adminPrimary {
+  border-color: #21362a;
+  color: #fff;
+  background: #21362a;
+}
+.campaignHistory {
+  overflow: hidden;
+  padding: 26px;
+}
+.campaignHistory article {
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) 95px 135px 100px auto;
+  align-items: center;
+  gap: 16px;
+  min-height: 76px;
+  border-top: 1px solid #edf0ee;
+}
+.campaignHistory article > div {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 3px;
+}
+.campaignHistory article > div b {
+  overflow: hidden;
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.campaignHistory article > div span {
+  color: #758178;
+  font-size: 10px;
+}
+.campaignStatus {
+  justify-self: start;
+  padding: 7px 9px;
+  border-radius: 99px;
+  color: #82662e;
+  background: #f6eddc;
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+.campaignStatus.completed {
+  color: #48633f;
+  background: #eaf3df;
+}
+.campaignStatus.failed {
+  color: #923f36;
+  background: #f7e6e4;
+}
+.identityIntegration {
+  display: grid;
+  grid-template-columns: minmax(280px, 1fr) auto auto;
+  align-items: center;
+  gap: 24px;
+  padding: 28px;
+}
+.identityIntegration p {
+  max-width: 700px;
+  color: #65746b;
+  font-size: 13px;
+  line-height: 1.6;
+}
+.identityIntegration > span {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #856b3b;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+.identityIntegration > span i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #c6a86b;
+}
+.identityIntegration > span.ready {
+  color: #567047;
+}
+.identityIntegration > span.ready i {
+  background: #80aa59;
+}
+
+@media (max-width: 1180px) {
+  .insightTables {
+    grid-template-columns: 1fr;
+  }
+  .seoPanel,
+  .identityIntegration {
+    grid-template-columns: 1fr repeat(3, 1fr);
+  }
+  .seoPanel > div,
+  .identityIntegration > div {
+    grid-column: 1 / -1;
+  }
+  .identityIntegration {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 900px) {
+  .insightSummary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .insightTopGrid {
+    grid-template-columns: 1fr;
+  }
+  .campaignHistory article {
+    grid-template-columns: 1fr repeat(3, auto);
+  }
+  .campaignHistory article > button {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 620px) {
+  .adminShell {
+    display: block;
+  }
+  .adminSide {
+    position: sticky;
+    z-index: 30;
+    top: 0;
+    width: 100%;
+    height: auto;
+    padding: 10px 14px;
+  }
+  .adminBrand {
+    padding-bottom: 8px;
+    border: 0;
+  }
+  .adminBrand img {
+    width: 35px;
+    height: 35px;
+  }
+  .adminSide nav {
+    display: flex;
+    flex-direction: row;
+    gap: 6px;
+    margin-top: 5px;
+    padding-bottom: 4px;
+    overflow-x: auto;
+  }
+  .adminSide nav button,
+  .adminSide nav button:not(.active) {
+    display: block;
+    min-width: max-content;
+    min-height: 38px;
+    padding: 8px 11px;
+  }
+  .adminSide nav button span,
+  .adminSide > a:last-child {
+    display: none;
+  }
+  .adminMain {
+    padding: 0 14px 40px;
+  }
+  .adminMain > header {
+    height: 72px;
+  }
+  .adminMain > header h1 {
+    font-size: 21px;
+  }
+  .adminModule {
+    padding-top: 22px;
+  }
+  .moduleHead h2 {
+    font-size: 36px;
+  }
+  .insightSummary,
+  .campaignAudience,
+  .campaignFormGrid,
+  .seoPanel,
+  .identityIntegration {
+    grid-template-columns: 1fr;
+  }
+  .insightSummary article,
+  .campaignAudience article {
+    min-height: 120px;
+  }
+  .funnelPanel,
+  .speedPanel,
+  .insightTable,
+  .seoPanel,
+  .campaignComposer,
+  .campaignHistory,
+  .identityIntegration {
+    padding: 20px;
+  }
+  .funnelStep {
+    grid-template-columns: 95px 1fr 35px;
+    gap: 8px;
+  }
+  .funnelStep em {
+    display: none;
+  }
+  .campaignFormGrid label.wide,
+  .seoPanel > div,
+  .identityIntegration > div {
+    grid-column: auto;
+  }
+  .campaignActions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .campaignActions p {
+    margin-right: 0;
+  }
+  .campaignHistory article {
+    grid-template-columns: 1fr 1fr;
+    padding: 14px 0;
+  }
+  .campaignHistory article > div:first-child,
+  .campaignHistory article > button {
+    grid-column: 1 / -1;
+  }
+  .identityIntegration > span {
+    line-height: 1.5;
+  }
+}
+
+/* GST operations and printable tax invoices */
+.gstWorkspace {
+  display: grid;
+  gap: 18px;
+}
+.gstToolbar {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 18px 20px;
+  border: 1px solid #e0e4e0;
+  border-radius: 10px;
+  background: #fff;
+}
+.gstToolbar label {
+  display: grid;
+  gap: 7px;
+  color: #6b796f;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+}
+.gstToolbar input {
+  min-height: 42px;
+  padding: 8px 11px;
+  border: 1px solid #ced6d1;
+  border-radius: 6px;
+  font: 14px var(--font-sans);
+}
+.gstToolbar > div {
+  display: flex;
+  gap: 8px;
+}
+.gstToolbar a,
+.gstInvoiceDesk article > a,
+.gstInvoiceDesk article > button {
+  display: inline-flex;
+  align-items: center;
+  min-height: 42px;
+  padding: 0 15px;
+  border: 1px solid #21362a;
+  color: #fff;
+  background: #21362a;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+.gstReturnGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+.gstReturnGrid > article,
+.gstSettings,
+.gstTaxMaster,
+.gstInvoiceDesk {
+  padding: 26px;
+  border: 1px solid #e0e4e0;
+  border-radius: 12px;
+  background: #fff;
+}
+.gstReturnGrid small,
+.gstSettings small,
+.gstTaxMaster small,
+.gstInvoiceDesk small {
+  color: #758178;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.11em;
+}
+.gstReturnGrid h3,
+.gstSettings h3,
+.gstTaxMaster h3,
+.gstInvoiceDesk h3 {
+  margin: 6px 0 18px;
+  font: 600 28px var(--font-display);
+}
+.gstReturnGrid article > p {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin: 0;
+  padding: 10px 0;
+  border-bottom: 1px solid #eef1ef;
+  font-size: 12px;
+}
+.gstReadiness {
+  color: #f0f5f1;
+  border-color: #21362a !important;
+  background: #21362a !important;
+}
+.gstReadiness small,
+.gstReadiness p {
+  color: #b2c0b6;
+}
+.gstReadiness p {
+  font-size: 13px;
+  line-height: 1.6;
+}
+.gstReadiness strong {
+  display: inline-block;
+  margin-top: 15px;
+  padding: 8px 10px;
+  color: #21362a;
+  background: #d7ed65;
+  font-size: 9px;
+  letter-spacing: 0.08em;
+}
+.gstConfigGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr);
+  gap: 12px;
+}
+.gstSettings > header,
+.gstTaxMaster > header,
+.gstInvoiceDesk > header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 22px;
+}
+.gstToggle,
+.gstComplianceCheck {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  color: #5f6f65;
+  font-size: 12px;
+  line-height: 1.5;
+}
+.gstToggle input,
+.gstComplianceCheck input {
+  width: 18px;
+  height: 18px;
+  accent-color: #21362a;
+}
+.gstFormGrid,
+.gstRateGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 13px;
+}
+.gstRateGrid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+.gstFormGrid label,
+.gstTaxMaster > label,
+.gstRateGrid label,
+.gstFixedUqc {
+  display: grid;
+  gap: 7px;
+  color: #56655c;
+  font-size: 11px;
+  font-weight: 600;
+}
+.gstFixedUqc b {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid #d4dbd6;
+  border-radius: 6px;
+  background: #f2f5f3;
+  font-size: 13px;
+}
+.gstFixedUqc span {
+  color: #758178;
+  font-size: 9px;
+  font-weight: 400;
+  line-height: 1.35;
+}
+.gstFormGrid label.wide {
+  grid-column: 1 / -1;
+}
+.gstFormGrid input,
+.gstTaxMaster input,
+.gstTaxMaster select,
+.gstTaxMaster textarea {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid #d4dbd6;
+  border-radius: 6px;
+  background: #fbfcfb;
+  font: 13px var(--font-sans);
+}
+.gstTaxMaster textarea {
+  min-height: 96px;
+  resize: vertical;
+}
+.gstTaxMaster > header {
+  display: block;
+}
+.gstTaxMaster > header p {
+  color: #68776d;
+  font-size: 12px;
+  line-height: 1.5;
+}
+.gstTaxMaster,
+.gstSettings {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.gstSettings > .adminPrimary,
+.gstTaxMaster > .adminPrimary {
+  align-self: flex-start;
+  min-height: 43px;
+  padding: 0 17px;
+}
+.gstInvoiceDesk {
+  overflow: hidden;
+}
+.gstInvoiceDesk > header > span {
+  color: #758178;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+}
+.gstInvoiceDesk article {
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) 140px 140px auto;
+  align-items: center;
+  gap: 18px;
+  min-height: 76px;
+  border-top: 1px solid #edf0ee;
+}
+.gstInvoiceDesk article > div {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 4px;
+}
+.gstInvoiceDesk article > div b {
+  overflow: hidden;
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.gstReconciliationAlert {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 22px 26px;
+  border: 1px solid #e0b862;
+  border-radius: 12px;
+  color: #4a3820;
+  background: #fff8e8;
+}
+.gstReconciliationAlert small {
+  color: #8b6828;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.11em;
+}
+.gstReconciliationAlert h3 {
+  margin: 5px 0 3px;
+  font: 600 24px var(--font-display);
+}
+.gstReconciliationAlert p {
+  max-width: 700px;
+  margin: 0;
+  color: #756044;
+  font-size: 12px;
+  line-height: 1.55;
+}
+.gstReconciliationAlert > strong {
+  flex: 0 0 auto;
+  padding: 10px 12px;
+  border-radius: 6px;
+  color: #fff;
+  background: #7d5515;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+}
+.gstDisclaimer {
+  margin: 0;
+  padding: 15px 18px;
+  border-left: 4px solid #c5a45e;
+  color: #665b48;
+  background: #fbf6ec;
+  font-size: 12px;
+  line-height: 1.6;
+}
+.adminDenied {
+  min-height: 100vh;
+  display: grid;
+  place-content: center;
+  padding: 30px;
+  color: #253128;
+  background: #f1eee8;
+  text-align: center;
+}
+.adminDenied h1 {
+  margin: 0;
+  font: 600 56px var(--font-display);
+}
+.adminDenied a {
+  margin-top: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+}
+
+.invoicePage {
+  min-height: 100vh;
+  padding: 35px 18px 70px;
+  color: #21180f;
+  background: #e8e4dc;
+}
+.invoiceActions {
+  width: min(100%, 920px);
+  margin: 0 auto 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.invoiceActions a,
+.invoicePrintButton {
+  min-height: 42px;
+  padding: 0 15px;
+  border: 1px solid #352416;
+  color: #fff;
+  background: #352416;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+.taxInvoice {
+  width: min(100%, 920px);
+  min-height: 1180px;
+  margin: auto;
+  padding: 42px;
+  border: 1px solid #c7bda9;
+  background: #fff;
+  box-shadow: 0 20px 60px rgba(36, 23, 12, 0.12);
+}
+.invoiceTitle,
+.invoiceIdentityGrid,
+.invoiceBuyer,
+.invoiceTotals,
+.invoiceFooter {
+  display: grid;
+  gap: 28px;
+}
+.invoiceTitle {
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  padding-bottom: 25px;
+  border-bottom: 3px solid #332317;
+}
+.invoiceTitle > div:first-child {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+}
+.invoiceTitle img {
+  width: 68px;
+  height: 68px;
+  border-radius: 50%;
+}
+.invoiceTitle span {
+  display: flex;
+  flex-direction: column;
+}
+.invoiceTitle span b {
+  font: 700 27px var(--font-display);
+}
+.invoiceTitle small,
+.taxInvoice section small {
+  color: #776859;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+}
+.invoiceTitle > div:last-child {
+  text-align: right;
+}
+.invoiceTitle h1 {
+  margin: 5px 0 0;
+  font: 700 37px var(--font-display);
+}
+.invoiceIdentityGrid {
+  grid-template-columns: 1fr 0.8fr;
+  padding: 25px 0;
+  border-bottom: 1px solid #d6cec1;
+}
+.invoiceIdentityGrid h2,
+.invoiceBuyer h3 {
+  margin: 6px 0;
+  font: 600 20px var(--font-display);
+}
+.invoiceIdentityGrid p,
+.invoiceBuyer p {
+  margin: 2px 0;
+  font-size: 11px;
+  line-height: 1.5;
+}
+.invoiceIdentityGrid dl,
+.invoiceTotals dl {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px 18px;
+  margin: 0;
+  font-size: 11px;
+}
+.invoiceIdentityGrid dd,
+.invoiceTotals dd {
+  margin: 0;
+  font-weight: 700;
+  text-align: right;
+}
+.invoiceBuyer {
+  grid-template-columns: 1.2fr 0.8fr;
+  padding: 22px 0;
+}
+.invoiceLineTable {
+  border: 1px solid #bfb4a3;
+}
+.invoiceLineHead,
+.invoiceLineRow {
+  display: grid;
+  grid-template-columns: 32px minmax(180px, 1.6fr) 70px 85px repeat(4, minmax(75px, 0.65fr));
+  align-items: center;
+}
+.invoiceLineHead {
+  min-height: 40px;
+  color: #fff;
+  background: #332317;
+  font-size: 8px;
+  letter-spacing: 0.06em;
+}
+.invoiceLineRow {
+  min-height: 54px;
+  border-bottom: 1px solid #ded8cf;
+  font-size: 10px;
+}
+.invoiceLineHead > *,
+.invoiceLineRow > * {
+  padding: 8px;
+  text-align: right;
+}
+.invoiceLineHead > :nth-child(2),
+.invoiceLineRow > :nth-child(2) {
+  text-align: left;
+}
+.invoiceTotals {
+  grid-template-columns: 1.25fr 0.75fr;
+  padding: 25px 0;
+  border-bottom: 1px solid #d6cec1;
+}
+.invoiceTotals p {
+  margin: 5px 0 16px;
+  font-size: 11px;
+  line-height: 1.45;
+}
+.invoiceTotals dl {
+  align-content: start;
+}
+.invoiceGrand {
+  padding-top: 9px;
+  border-top: 2px solid #332317;
+  font-size: 13px;
+}
+.invoiceIrn {
+  display: grid;
+  gap: 7px;
+  padding: 18px 0;
+  border-bottom: 1px solid #d6cec1;
+  font-size: 10px;
+}
+.invoiceFooter {
+  grid-template-columns: 1fr 250px;
+  align-items: end;
+  padding-top: 40px;
+  font-size: 10px;
+}
+.invoiceFooter > div {
+  display: grid;
+  gap: 45px;
+  padding-top: 10px;
+  border-bottom: 1px solid #332317;
+  text-align: center;
+}
+.invoiceFooter > div span {
+  padding-bottom: 5px;
+}
+.orderInvoiceLink {
+  border-top: 1px solid rgba(128, 104, 77, 0.2);
+}
+
+@media (max-width: 900px) {
+  .gstReturnGrid,
+  .gstConfigGrid {
+    grid-template-columns: 1fr;
+  }
+  .gstInvoiceDesk article {
+    grid-template-columns: 1fr 1fr;
+    padding: 14px 0;
+  }
+  .gstInvoiceDesk article > a,
+  .gstInvoiceDesk article > button {
+    justify-self: start;
+  }
+  .taxInvoice {
+    overflow-x: auto;
+  }
+  .invoiceLineTable {
+    min-width: 780px;
+  }
+}
+
+@media (max-width: 620px) {
+  .gstToolbar,
+  .gstToolbar > div {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .gstSummary,
+  .gstFormGrid,
+  .gstRateGrid {
+    grid-template-columns: 1fr;
+  }
+  .gstFormGrid label.wide {
+    grid-column: auto;
+  }
+  .gstInvoiceDesk article {
+    grid-template-columns: 1fr;
+  }
+  .gstReconciliationAlert {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .invoicePage {
+    padding: 0;
+  }
+  .invoiceActions {
+    padding: 12px;
+  }
+  .taxInvoice {
+    min-height: 0;
+    padding: 22px;
+    border: 0;
+    box-shadow: none;
+  }
+  .invoiceTitle,
+  .invoiceIdentityGrid,
+  .invoiceBuyer,
+  .invoiceTotals,
+  .invoiceFooter {
+    grid-template-columns: 1fr;
+  }
+  .invoiceTitle > div:last-child {
+    text-align: left;
+  }
+}
+
+@media print {
+  @page {
+    size: A4;
+    margin: 8mm;
+  }
+  .noPrint {
+    display: none !important;
+  }
+  .invoicePage {
+    min-height: 0;
+    padding: 0;
+    background: #fff;
+  }
+  .taxInvoice {
+    width: 100%;
+    min-height: 0;
+    padding: 8mm;
+    border: 0;
+    box-shadow: none;
+  }
+}

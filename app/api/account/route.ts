@@ -5,6 +5,7 @@ import {
   customerOrders,
   customerProfiles,
   orderItems,
+  taxInvoices,
 } from "../../../db/schema";
 import { getChatGPTUser } from "../../chatgpt-auth";
 
@@ -65,6 +66,15 @@ export async function GET() {
             ),
           )
       : [];
+    const invoices = await db
+      .select({
+        id: taxInvoices.id,
+        orderId: taxInvoices.orderId,
+        invoiceNumber: taxInvoices.invoiceNumber,
+        status: taxInvoices.status,
+      })
+      .from(taxInvoices)
+      .where(eq(taxInvoices.userId, user.userId));
 
     return Response.json(
       {
@@ -73,6 +83,8 @@ export async function GET() {
         orders: orders.map((order) => ({
           ...order,
           items: items.filter((item) => item.orderId === order.id),
+          invoice:
+            invoices.find((invoice) => invoice.orderId === order.id) ?? null,
         })),
       },
       { headers: { "Cache-Control": "private, no-store" } },
@@ -93,13 +105,35 @@ export async function PUT(request: Request) {
     const body = (await request.json()) as {
       displayName?: string;
       phone?: string;
+      billingLegalName?: string;
+      billingGstin?: string;
       marketingOptIn?: boolean;
+      whatsappMarketingOptIn?: boolean;
     };
     const displayName = body.displayName?.trim().slice(0, 80);
     const phone = body.phone?.trim().slice(0, 24) ?? "";
+    const billingLegalName = body.billingLegalName?.trim().slice(0, 120) || null;
+    const billingGstin = body.billingGstin?.trim().toUpperCase().slice(0, 15) || null;
     if (!displayName) {
       return Response.json(
         { error: "Display name is required" },
+        { status: 400 },
+      );
+    }
+    if (body.whatsappMarketingOptIn && !phone) {
+      return Response.json(
+        { error: "Add a mobile number before enabling WhatsApp offers." },
+        { status: 400 },
+      );
+    }
+    if (
+      billingGstin &&
+      !/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/.test(
+        billingGstin,
+      )
+    ) {
+      return Response.json(
+        { error: "Enter a valid 15-character GSTIN or leave it blank." },
         { status: 400 },
       );
     }
@@ -113,7 +147,10 @@ export async function PUT(request: Request) {
         email: user.email,
         displayName,
         phone,
+        billingLegalName,
+        billingGstin,
         marketingOptIn: Boolean(body.marketingOptIn),
+        whatsappMarketingOptIn: Boolean(body.whatsappMarketingOptIn),
         createdAt: now,
         updatedAt: now,
       })
@@ -123,7 +160,10 @@ export async function PUT(request: Request) {
           email: user.email,
           displayName,
           phone,
+          billingLegalName,
+          billingGstin,
           marketingOptIn: Boolean(body.marketingOptIn),
+          whatsappMarketingOptIn: Boolean(body.whatsappMarketingOptIn),
           updatedAt: now,
         },
       });
