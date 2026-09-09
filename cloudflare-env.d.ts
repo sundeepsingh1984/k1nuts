@@ -2,6 +2,9 @@ interface K1RuntimeBindings {
   DB: D1Database;
   GOOGLE_PLACES_API_KEY?: string;
   GOOGLE_PLACE_ID?: string;
+  K1_ADMIN_USERNAME?: string;
+  K1_ADMIN_PASSWORD_SHA256?: string;
+  K1_ADMIN_SESSION_SECRET?: string;
   SHIPROCKET_EMAIL?: string;
   SHIPROCKET_PASSWORD?: string;
   SHIPROCKET_PICKUP_LOCATION?: string;

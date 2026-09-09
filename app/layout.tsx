@@ -4,6 +4,7 @@ import "./globals.css";
 import { PerformanceReporter } from "./performance-reporter";
 import { absoluteUrl, safeJsonLd, SITE_URL } from "./seo";
 import { StorefrontProvider } from "./storefront-context";
+import { SupportChat } from "./support-chat";
 
 const display = Cormorant_Garamond({ variable: "--font-display", subsets: ["latin"], weight: ["500", "600", "700"], style: ["normal", "italic"] });
 const sans = DM_Sans({ variable: "--font-sans", subsets: ["latin"], weight: ["400", "500", "600", "700"] });
@@ -63,6 +64,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <StorefrontProvider>
           <PerformanceReporter />
           {children}
+          <SupportChat />
         </StorefrontProvider>
       </body>
     </html>

@@ -421,3 +421,44 @@ export const productReviews = sqliteTable(
     ),
   ],
 );
+
+export const supportConversations = sqliteTable(
+  "support_conversations",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    visitorTokenHash: text("visitor_token_hash").notNull(),
+    userId: text("user_id"),
+    customerName: text("customer_name"),
+    customerEmail: text("customer_email"),
+    status: text("status").notNull().default("open"),
+    lastMessageAt: integer("last_message_at").notNull(),
+    createdAt: integer("created_at").notNull(),
+    updatedAt: integer("updated_at").notNull(),
+  },
+  (table) => [
+    uniqueIndex("idx_support_conversations_token").on(table.visitorTokenHash),
+    index("idx_support_conversations_status_recent").on(
+      table.status,
+      table.lastMessageAt,
+    ),
+  ],
+);
+
+export const supportMessages = sqliteTable(
+  "support_messages",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    conversationId: integer("conversation_id").notNull(),
+    sender: text("sender").notNull(),
+    body: text("body").notNull(),
+    createdAt: integer("created_at").notNull(),
+    readAt: integer("read_at"),
+  },
+  (table) => [
+    index("idx_support_messages_conversation_created").on(
+      table.conversationId,
+      table.createdAt,
+    ),
+    index("idx_support_messages_sender_read").on(table.sender, table.readAt),
+  ],
+);

@@ -1,14 +1,14 @@
 import { eq } from "drizzle-orm";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { getDb } from "../../../db";
 import {
   customerOrders,
   taxInvoiceLines,
   taxInvoices,
 } from "../../../db/schema";
-import { isAdminEmail } from "../../admin-auth";
-import { requireChatGPTUser } from "../../chatgpt-auth";
+import { getAdminUser } from "../../admin-auth";
+import { getChatGPTUser } from "../../chatgpt-auth";
 import { PrintInvoiceButton } from "./print-button";
 
 export const dynamic = "force-dynamic";
@@ -82,10 +82,18 @@ export default async function InvoicePage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const user = await requireChatGPTUser("/account?tab=orders");
   const { id } = await params;
   const invoiceId = Number(id);
   if (!Number.isInteger(invoiceId)) notFound();
+  const [user, admin] = await Promise.all([
+    getChatGPTUser(),
+    getAdminUser(),
+  ]);
+  if (!user && !admin) {
+    redirect(
+      `/signin-with-chatgpt?return_to=${encodeURIComponent(`/invoice/${invoiceId}`)}`,
+    );
+  }
   const db = getDb();
   const [[invoice], lines] = await Promise.all([
     db.select().from(taxInvoices).where(eq(taxInvoices.id, invoiceId)).limit(1),
@@ -94,7 +102,7 @@ export default async function InvoicePage({
       .from(taxInvoiceLines)
       .where(eq(taxInvoiceLines.invoiceId, invoiceId)),
   ]);
-  if (!invoice || (invoice.userId !== user.userId && !isAdminEmail(user.email))) {
+  if (!invoice || (!admin && invoice.userId !== user?.userId)) {
     notFound();
   }
   const [order] = await db
@@ -106,7 +114,7 @@ export default async function InvoicePage({
   return (
     <main className="invoicePage">
       <div className="invoiceActions noPrint">
-        <Link href={invoice.userId === user.userId ? "/account?tab=orders" : "/admin"}>
+        <Link href={admin ? "/admin" : "/account?tab=orders"}>
           ← BACK
         </Link>
         <PrintInvoiceButton />

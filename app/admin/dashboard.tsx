@@ -19,6 +19,24 @@ type Activity = {
   createdAt: number;
 };
 
+type SupportConversation = {
+  id: number;
+  customerName: string | null;
+  customerEmail: string | null;
+  status: string;
+  lastMessageAt: number;
+  lastMessage: string;
+  unread: number;
+};
+
+type SupportMessage = {
+  id: number;
+  sender: "customer" | "bot" | "admin";
+  body: string;
+  createdAt: number;
+  readAt: number | null;
+};
+
 type CampaignData = {
   campaigns: Array<{
     id: number;
@@ -305,6 +323,11 @@ export default function AdminDashboard({
   const [toast, setToast] = useState("");
   const [renderedAt] = useState(Date.now);
 
+  async function signOut() {
+    await fetch("/api/admin/session", { method: "DELETE" });
+    window.location.replace("/admin/login");
+  }
+
   const loadDashboard = useCallback(async () => {
     const response = await fetch("/api/admin/dashboard", { cache: "no-store" });
     if (response.ok) setData((await response.json()) as DashboardData);
@@ -355,6 +378,7 @@ export default function AdminDashboard({
             "insights",
             "products",
             "orders",
+            "support",
             "gst",
             "returns",
             "customers",
@@ -390,6 +414,9 @@ export default function AdminDashboard({
               ↻
             </button>
             <span>LIVE STORE</span>
+            <button className="adminSignOut" onClick={() => void signOut()}>
+              SIGN OUT
+            </button>
           </div>
         </header>
 
@@ -569,6 +596,10 @@ function AdminModule({
       "Order operations",
       "Create shipments and keep fulfilment moving.",
     ],
+    support: [
+      "Customer support inbox",
+      "Read live K1 Concierge conversations, reply personally and resolve requests.",
+    ],
     gst: [
       "GST & invoicing",
       "Issue compliant tax invoices and prepare monthly outward-supply data.",
@@ -633,6 +664,8 @@ function AdminModule({
         </>
       ) : tab === "orders" ? (
         <OrdersTable data={data} reload={reload} setToast={setToast} />
+      ) : tab === "support" ? (
+        <SupportPanel setToast={setToast} />
       ) : tab === "gst" ? (
         <GstPanel data={data} setToast={setToast} />
       ) : tab === "returns" ? (
@@ -1961,6 +1994,172 @@ function IntegrationPanel({
             ? "CONFIGURED · ACTIVATION PENDING"
             : "SETUP REQUIRED"}
         </span>
+      </section>
+    </div>
+  );
+}
+
+function SupportPanel({
+  setToast,
+}: {
+  setToast: (value: string) => void;
+}) {
+  const [conversations, setConversations] = useState<SupportConversation[]>([]);
+  const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [messages, setMessages] = useState<SupportMessage[]>([]);
+  const [draft, setDraft] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  const loadConversations = useCallback(async () => {
+    const response = await fetch("/api/admin/support", { cache: "no-store" });
+    if (!response.ok) return;
+    const result = (await response.json()) as {
+      conversations: SupportConversation[];
+    };
+    setConversations(result.conversations);
+    setSelectedId((current) => current ?? result.conversations[0]?.id ?? null);
+  }, []);
+
+  const loadMessages = useCallback(async () => {
+    if (!selectedId) return;
+    const response = await fetch(
+      `/api/admin/support?conversationId=${selectedId}`,
+      { cache: "no-store" },
+    );
+    if (!response.ok) return;
+    const result = (await response.json()) as { messages: SupportMessage[] };
+    setMessages(result.messages);
+  }, [selectedId]);
+
+  useEffect(() => {
+    const initial = window.setTimeout(() => void loadConversations(), 0);
+    const timer = window.setInterval(() => void loadConversations(), 4000);
+    return () => {
+      window.clearTimeout(initial);
+      window.clearInterval(timer);
+    };
+  }, [loadConversations]);
+
+  useEffect(() => {
+    const initial = window.setTimeout(() => void loadMessages(), 0);
+    const timer = window.setInterval(() => void loadMessages(), 3500);
+    return () => {
+      window.clearTimeout(initial);
+      window.clearInterval(timer);
+    };
+  }, [loadMessages]);
+
+  const selected = conversations.find(
+    (conversation) => conversation.id === selectedId,
+  );
+
+  async function submitReply(event: FormEvent) {
+    event.preventDefault();
+    if (!selectedId || !draft.trim()) return;
+    setBusy(true);
+    const response = await fetch("/api/admin/support", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ conversationId: selectedId, message: draft }),
+    });
+    setBusy(false);
+    if (!response.ok) {
+      setToast("Reply could not be sent");
+      return;
+    }
+    setDraft("");
+    setToast("Reply sent to the customer");
+    await Promise.all([loadMessages(), loadConversations()]);
+  }
+
+  async function changeStatus(status: "open" | "resolved") {
+    if (!selectedId) return;
+    const response = await fetch("/api/admin/support", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ conversationId: selectedId, status }),
+    });
+    if (response.ok) {
+      setToast(status === "resolved" ? "Conversation resolved" : "Conversation reopened");
+      await loadConversations();
+    }
+  }
+
+  return (
+    <div className="supportInbox">
+      <aside className="supportConversationList">
+        <header>
+          <div>
+            <small>LIVE INBOX</small>
+            <b>{conversations.length} conversations</b>
+          </div>
+          <span>{conversations.reduce((sum, item) => sum + Number(item.unread), 0)} NEW</span>
+        </header>
+        <div>
+          {conversations.map((conversation) => (
+            <button
+              className={conversation.id === selectedId ? "active" : ""}
+              key={conversation.id}
+              onClick={() => setSelectedId(conversation.id)}
+            >
+              <span>
+                <b>{conversation.customerName || `Guest ${conversation.id}`}</b>
+                <small>{conversation.status.toUpperCase()} · {new Date(conversation.lastMessageAt).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" })}</small>
+              </span>
+              {Number(conversation.unread) > 0 && <i>{conversation.unread}</i>}
+              <p>{conversation.lastMessage || "Conversation started"}</p>
+            </button>
+          ))}
+          {!conversations.length && (
+            <div className="supportInboxEmpty">
+              <b>No conversations yet</b>
+              <p>New K1 Concierge requests will appear here automatically.</p>
+            </div>
+          )}
+        </div>
+      </aside>
+      <section className="supportThread">
+        {selected ? (
+          <>
+            <header>
+              <div>
+                <small>CUSTOMER CONVERSATION</small>
+                <h3>{selected.customerName || `Guest ${selected.id}`}</h3>
+                <p>{selected.customerEmail || "Anonymous storefront visitor"}</p>
+              </div>
+              <button
+                onClick={() => void changeStatus(selected.status === "resolved" ? "open" : "resolved")}
+              >
+                {selected.status === "resolved" ? "REOPEN" : "MARK RESOLVED"}
+              </button>
+            </header>
+            <div className="supportThreadMessages" aria-live="polite">
+              {messages.map((message) => (
+                <article className={message.sender} key={message.id}>
+                  <small>{message.sender === "customer" ? "CUSTOMER" : message.sender === "admin" ? "YOU · K1 TEAM" : "CONCIERGE"}</small>
+                  <p>{message.body}</p>
+                  <time>{new Date(message.createdAt).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}</time>
+                </article>
+              ))}
+            </div>
+            <form onSubmit={submitReply}>
+              <textarea
+                value={draft}
+                onChange={(event) => setDraft(event.target.value)}
+                maxLength={1000}
+                placeholder="Write a personal reply from K1…"
+                required
+              />
+              <button disabled={busy}>{busy ? "SENDING…" : "SEND REPLY →"}</button>
+            </form>
+          </>
+        ) : (
+          <div className="supportThreadEmpty">
+            <span>✦</span>
+            <h3>K1 Concierge inbox</h3>
+            <p>Select a customer conversation to read and reply.</p>
+          </div>
+        )}
       </section>
     </div>
   );

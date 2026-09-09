@@ -221,9 +221,6 @@ export function StoreHeader() {
           <Link href="/#testimonials">Reviews</Link>
         </nav>
         <div className="headerTools">
-          <Link href="/admin" className="adminLink">
-            Admin
-          </Link>
           <Link
             href={
               signedIn
@@ -275,7 +272,7 @@ export function StoreFooter() {
         <b>SECURE COMMERCE</b>
         <span>Razorpay · PhonePe · UPI</span>
         <span>Shiprocket · Delhivery</span>
-        <Link href="/admin">Store administration</Link>
+        <span>Private, protected checkout</span>
       </div>
       <small>
         © 2026 K1 Nut&apos;s · ESTD 2023 · Digital pack renders use K1 branding;

@@ -165,3 +165,30 @@ test("ships controlled GST invoicing and accountant-ready working data", async (
   assert.match(schema, /taxInvoices/);
   assert.match(schema, /taxInvoiceLines/);
 });
+
+test("ships private admin sessions and persistent K1 Concierge support", async () => {
+  const [adminAuth, adminLogin, adminDashboard, supportRoute, adminSupport, chat, schema, storefront] =
+    await Promise.all([
+      readFile(new URL("../app/admin-auth.ts", import.meta.url), "utf8"),
+      readFile(new URL("../app/admin/login/page.tsx", import.meta.url), "utf8"),
+      readFile(new URL("../app/admin/dashboard.tsx", import.meta.url), "utf8"),
+      readFile(new URL("../app/api/support/route.ts", import.meta.url), "utf8"),
+      readFile(new URL("../app/api/admin/support/route.ts", import.meta.url), "utf8"),
+      readFile(new URL("../app/support-chat.tsx", import.meta.url), "utf8"),
+      readFile(new URL("../db/schema.ts", import.meta.url), "utf8"),
+      readFile(new URL("../app/storefront-context.tsx", import.meta.url), "utf8"),
+    ]);
+
+  assert.match(adminAuth, /httpOnly: true/);
+  assert.match(adminAuth, /K1_ADMIN_PASSWORD_SHA256/);
+  assert.match(adminLogin, /Administrator sign in/);
+  assert.match(adminDashboard, /Customer support inbox/);
+  assert.match(adminDashboard, /MARK RESOLVED/);
+  assert.match(supportRoute, /K1 Concierge/);
+  assert.match(supportRoute, /support_messages/);
+  assert.match(adminSupport, /Authentication required/);
+  assert.match(chat, /Quick guidance · team support/);
+  assert.match(schema, /supportConversations/);
+  assert.match(schema, /supportMessages/);
+  assert.doesNotMatch(storefront, /href="\/admin"/);
+});
