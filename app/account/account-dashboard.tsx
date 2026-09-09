@@ -246,7 +246,7 @@ export function AccountDashboard({
             </button>
           ))}
         </nav>
-        <a href="/signout-with-chatgpt?return_to=/">SIGN OUT →</a>
+        <a href="/api/auth/logout">SIGN OUT →</a>
       </aside>
 
       <div className="accountContent">

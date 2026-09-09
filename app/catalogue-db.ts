@@ -1,17 +1,76 @@
 import { and, eq, inArray } from "drizzle-orm";
 import { cache } from "react";
 import { getDb } from "../db";
-import { adminProducts, productVariants } from "../db/schema";
+import { adminProducts, productVariants, storeCategories } from "../db/schema";
 import {
   getCategoryProducts,
   getProduct,
   products,
+  categories,
+  type StoreCategory,
   type ProductVariant,
   type StoreProduct,
 } from "./store-data";
 
 type ProductRow = typeof adminProducts.$inferSelect;
 type VariantRow = typeof productVariants.$inferSelect;
+type CategoryRow = typeof storeCategories.$inferSelect;
+
+function mapCategory(row: CategoryRow): StoreCategory {
+  return {
+    slug: row.slug,
+    name: row.name,
+    kicker: row.kicker,
+    description: row.description,
+    emoji: row.emoji,
+    tone: row.tone,
+    image: row.image,
+  };
+}
+
+export const getCatalogueCategories = cache(async function getCatalogueCategories() {
+  try {
+    const overrides = await getDb()
+      .select()
+      .from(storeCategories)
+      .orderBy(storeCategories.sortOrder, storeCategories.name);
+    const overrideMap = new Map(overrides.map((category) => [category.slug, category]));
+    const builtInSlugs = new Set(categories.map((category) => category.slug));
+    return [
+      ...categories.map((category, index) => {
+        const override = overrideMap.get(category.slug);
+        return {
+          category: override ? mapCategory(override) : category,
+          active: override?.active ?? true,
+          sortOrder: override?.sortOrder ?? index * 10,
+        };
+      }),
+      ...overrides
+        .filter((category) => !builtInSlugs.has(category.slug))
+        .map((category) => ({
+          category: mapCategory(category),
+          active: category.active,
+          sortOrder: category.sortOrder,
+        })),
+    ]
+      .filter((entry) => entry.active)
+      .sort(
+        (left, right) =>
+          left.sortOrder - right.sortOrder ||
+          left.category.name.localeCompare(right.category.name),
+      )
+      .map((entry) => entry.category);
+  } catch {
+    return categories;
+  }
+});
+
+export const getCatalogueCategory = cache(async function getCatalogueCategory(
+  slug: string,
+) {
+  const catalogueCategories = await getCatalogueCategories();
+  return catalogueCategories.find((category) => category.slug === slug);
+});
 
 function mapProduct(row: ProductRow, variants: VariantRow[]): StoreProduct {
   return {

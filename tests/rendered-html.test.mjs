@@ -192,3 +192,50 @@ test("ships private admin sessions and persistent K1 Concierge support", async (
   assert.match(schema, /supportMessages/);
   assert.doesNotMatch(storefront, /href="\/admin"/);
 });
+
+test("ships dynamic catalogue administration and two-factor customer authentication", async () => {
+  const [
+    dashboard,
+    productsRoute,
+    categoriesRoute,
+    catalogue,
+    login,
+    loginClient,
+    customerAuth,
+    emailAuth,
+    googleAuth,
+    schema,
+    storefront,
+  ] = await Promise.all([
+    readFile(new URL("../app/admin/dashboard.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/api/admin/products/route.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/api/admin/categories/route.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/catalogue-db.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/login/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/login/customer-login.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/customer-auth.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/api/auth/email/route.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/api/auth/google/route.ts", import.meta.url), "utf8"),
+    readFile(new URL("../db/schema.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/storefront-context.tsx", import.meta.url), "utf8"),
+  ]);
+
+  assert.match(dashboard, /SAVE PRODUCT CHANGES/);
+  assert.match(dashboard, /Create a store category/);
+  assert.match(dashboard, /appear automatically in the Shop menu/);
+  assert.match(productsRoute, /export async function PUT/);
+  assert.match(categoriesRoute, /export async function POST/);
+  assert.match(categoriesRoute, /export async function PUT/);
+  assert.match(catalogue, /getCatalogueCategories/);
+  assert.match(login, /Good food/);
+  assert.match(loginClient, /CONTINUE WITH GOOGLE/);
+  assert.match(loginClient, /CONTINUE TO EMAIL CODE/);
+  assert.match(customerAuth, /PBKDF2/);
+  assert.match(customerAuth, /httpOnly: true/);
+  assert.match(emailAuth, /attempts >= 5/);
+  assert.match(googleAuth, /openidconnect\.googleapis\.com/);
+  assert.match(schema, /storeCategories/);
+  assert.match(schema, /customerAccounts/);
+  assert.match(schema, /emailOtpCodes/);
+  assert.doesNotMatch(storefront, /signin-with-chatgpt/);
+});

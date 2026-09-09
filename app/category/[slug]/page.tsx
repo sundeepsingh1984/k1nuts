@@ -1,8 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getCategoryCatalogue } from "../../catalogue-db";
-import { categories, getCategory } from "../../store-data";
+import {
+  getCatalogueCategories,
+  getCatalogueCategory,
+  getCategoryCatalogue,
+} from "../../catalogue-db";
 import { StoreFooter, StoreHeader } from "../../storefront-context";
 import { absoluteUrl, safeJsonLd } from "../../seo";
 import { CategoryCatalogue } from "./category-catalogue";
@@ -15,7 +18,7 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const category = getCategory(slug);
+  const category = await getCatalogueCategory(slug);
   if (!category) return { title: "Collection not found", robots: { index: false } };
   const path = `/category/${category.slug}`;
   const image = absoluteUrl(category.image);
@@ -45,9 +48,12 @@ export default async function CategoryPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const category = getCategory(slug);
+  const category = await getCatalogueCategory(slug);
   if (!category) notFound();
-  const products = await getCategoryCatalogue(slug);
+  const [products, categories] = await Promise.all([
+    getCategoryCatalogue(slug),
+    getCatalogueCategories(),
+  ]);
   const collectionPath = `/category/${category.slug}`;
   const collectionSchema = {
     "@context": "https://schema.org",

@@ -1,12 +1,14 @@
 import type { MetadataRoute } from "next";
-import { getAllCatalogueProducts } from "./catalogue-db";
+import { getAllCatalogueProducts, getCatalogueCategories } from "./catalogue-db";
 import { absoluteUrl } from "./seo";
-import { categories } from "./store-data";
 
 export const dynamic = "force-dynamic";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const products = await getAllCatalogueProducts();
+  const [products, categories] = await Promise.all([
+    getAllCatalogueProducts(),
+    getCatalogueCategories(),
+  ]);
   const now = new Date();
   return [
     {

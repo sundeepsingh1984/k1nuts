@@ -1,12 +1,12 @@
 import { Suspense } from "react";
-import { requireChatGPTUser } from "../chatgpt-auth";
+import { requireCustomerUser } from "../customer-auth";
 import { StoreFooter, StoreHeader } from "../storefront-context";
 import { AccountDashboard } from "./account-dashboard";
 
 export const dynamic = "force-dynamic";
 
 async function ProtectedAccount() {
-  const user = await requireChatGPTUser("/account");
+  const user = await requireCustomerUser("/account");
   return (
     <AccountDashboard
       authenticatedUser={{

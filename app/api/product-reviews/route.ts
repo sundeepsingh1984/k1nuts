@@ -6,8 +6,8 @@ import {
   orderItems,
   productReviews,
 } from "../../../db/schema";
-import { getProduct } from "../../store-data";
-import { getChatGPTUser } from "../../chatgpt-auth";
+import { getCatalogueProduct } from "../../catalogue-db";
+import { getCustomerUser } from "../../customer-auth";
 
 async function reviewEligibility(userId: string, productSlug: string) {
   const db = getDb();
@@ -40,7 +40,7 @@ export async function GET(request: Request) {
   const productSlug = new URL(request.url).searchParams
     .get("productSlug")
     ?.trim();
-  if (!productSlug || !getProduct(productSlug)) {
+  if (!productSlug || !(await getCatalogueProduct(productSlug))) {
     return Response.json({ error: "Unknown product" }, { status: 404 });
   }
 
@@ -65,7 +65,7 @@ export async function GET(request: Request) {
       )
       .orderBy(desc(productReviews.createdAt))
       .limit(30);
-    const user = await getChatGPTUser();
+    const user = await getCustomerUser();
     const eligibility = user
       ? await reviewEligibility(user.userId, productSlug)
       : { purchase: null, existing: null };
@@ -95,7 +95,7 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const user = await getChatGPTUser();
+  const user = await getCustomerUser();
   if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
   try {
@@ -110,7 +110,7 @@ export async function POST(request: Request) {
     const title = body.title?.trim().slice(0, 90) ?? "";
     const reviewBody = body.body?.trim().slice(0, 1200) ?? "";
     if (
-      !getProduct(productSlug) ||
+      !(await getCatalogueProduct(productSlug)) ||
       !Number.isInteger(rating) ||
       rating < 1 ||
       rating > 5 ||

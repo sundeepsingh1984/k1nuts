@@ -1,7 +1,7 @@
 import { desc } from "drizzle-orm";
 import { getDb } from "../../../db";
 import { activityEvents } from "../../../db/schema";
-import { getChatGPTUser } from "../../chatgpt-auth";
+import { getCustomerUser } from "../../customer-auth";
 import { getAdminUser } from "../../admin-auth";
 
 const SESSION_COOKIE = "k1_session";
@@ -45,7 +45,7 @@ export async function POST(request: Request) {
       SESSION_COOKIE,
     );
     const sessionId = currentSession || crypto.randomUUID();
-    const user = await getChatGPTUser();
+    const user = await getCustomerUser();
     const metadata = body.metadata
       ? JSON.stringify(body.metadata).slice(0, 1000)
       : null;

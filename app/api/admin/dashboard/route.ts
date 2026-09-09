@@ -8,6 +8,7 @@ import {
   orderReturns,
   orderShipments,
   productVariants,
+  storeCategories,
 } from "../../../../db/schema";
 import { products } from "../../../store-data";
 import { getShippingConfiguration } from "../../../shipping";
@@ -28,6 +29,7 @@ export async function GET() {
     metrics,
     dailyResult,
     customProducts,
+    customCategories,
     variants,
     orders,
     returns,
@@ -60,6 +62,7 @@ export async function GET() {
         GROUP BY days.day ORDER BY days.day`,
     ).all<Record<string, number | string>>(),
     db.select().from(adminProducts).orderBy(desc(adminProducts.createdAt)),
+    db.select().from(storeCategories).orderBy(storeCategories.sortOrder),
     db.select().from(productVariants).orderBy(productVariants.weightGrams),
     db
       .select()
@@ -167,6 +170,7 @@ export async function GET() {
           (variant) => variant.productSlug === product.slug,
         ),
       })),
+      customCategories,
       orders: orders.map((order) => ({
         ...order,
         shipment:

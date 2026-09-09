@@ -5,6 +5,10 @@ interface K1RuntimeBindings {
   K1_ADMIN_USERNAME?: string;
   K1_ADMIN_PASSWORD_SHA256?: string;
   K1_ADMIN_SESSION_SECRET?: string;
+  K1_AUTH_SECRET?: string;
+  GOOGLE_OAUTH_CLIENT_ID?: string;
+  GOOGLE_OAUTH_CLIENT_SECRET?: string;
+  K1_AUTH_FROM_EMAIL?: string;
   SHIPROCKET_EMAIL?: string;
   SHIPROCKET_PASSWORD?: string;
   SHIPROCKET_PICKUP_LOCATION?: string;

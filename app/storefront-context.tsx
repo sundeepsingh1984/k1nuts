@@ -11,7 +11,7 @@ import {
   useState,
 } from "react";
 import { trackStoreEvent } from "./analytics";
-import { formatInr, type StoreProduct } from "./store-data";
+import { formatInr, type StoreCategory, type StoreProduct } from "./store-data";
 
 type CartLine = { product: StoreProduct; quantity: number };
 const cartLineId = (product: StoreProduct) =>
@@ -23,14 +23,17 @@ type StoreContextValue = {
   remove: (slug: string) => void;
   openCart: () => void;
   signedIn: boolean;
+  categories: StoreCategory[];
 };
 
 const StoreContext = createContext<StoreContextValue | null>(null);
 
 export function StorefrontProvider({
   children,
+  categories,
 }: {
   children: React.ReactNode;
+  categories: StoreCategory[];
 }) {
   const [cart, setCart] = useState<CartLine[]>([]);
   const [cartOpen, setCartOpen] = useState(false);
@@ -93,7 +96,7 @@ export function StorefrontProvider({
       setCartOpen(false);
       track("checkout_login_gate");
       window.location.href =
-        "/signin-with-chatgpt?return_to=%2Faccount%3Ftab%3Daddresses%26checkout%3D1";
+        "/login?return_to=%2Faccount%3Ftab%3Daddresses%26checkout%3D1";
       return;
     }
     track("begin_checkout");
@@ -111,8 +114,9 @@ export function StorefrontProvider({
         ),
       openCart: () => setCartOpen(true),
       signedIn,
+      categories,
     }),
-    [add, cart, count, signedIn],
+    [add, cart, categories, count, signedIn],
   );
 
   return (
@@ -196,7 +200,7 @@ export function useStore() {
 }
 
 export function StoreHeader() {
-  const { count, openCart, signedIn } = useStore();
+  const { count, openCart, signedIn, categories } = useStore();
   return (
     <>
       <div className="brandBar saleBar">
@@ -215,17 +219,40 @@ export function StoreHeader() {
           </span>
         </Link>
         <nav>
-          <Link href="/#healthy">Healthy Bites</Link>
-          <Link href="/#categories">Shop</Link>
+          <Link href="/category/healthy-snacks">Healthy Bites</Link>
+          <details className="shopMenu">
+            <summary>Shop</summary>
+            <div>
+              {categories.map((category) => (
+                <Link href={`/category/${category.slug}`} key={category.slug}>
+                  <span>{category.kicker}</span>
+                  <b>{category.name}</b>
+                </Link>
+              ))}
+            </div>
+          </details>
           <Link href="/#story">Our Story</Link>
           <Link href="/#testimonials">Reviews</Link>
         </nav>
+        <details className="mobileStoreMenu">
+          <summary>MENU</summary>
+          <div>
+            <Link href="/category/healthy-snacks">Healthy Bites</Link>
+            {categories.map((category) => (
+              <Link href={`/category/${category.slug}`} key={category.slug}>
+                {category.name}
+              </Link>
+            ))}
+            <Link href="/#story">Our Story</Link>
+            <Link href="/#testimonials">Reviews</Link>
+          </div>
+        </details>
         <div className="headerTools">
           <Link
             href={
               signedIn
                 ? "/account"
-                : "/signin-with-chatgpt?return_to=%2Faccount"
+                : "/login?return_to=%2Faccount"
             }
             className="accountLink"
             title={signedIn ? "My account" : "Sign in"}
@@ -242,6 +269,7 @@ export function StoreHeader() {
 }
 
 export function StoreFooter() {
+  const { categories } = useStore();
   return (
     <footer className="newFooter">
       <div>
@@ -254,9 +282,11 @@ export function StoreFooter() {
       </div>
       <div>
         <b>SHOP</b>
-        <Link href="/category/healthy-snacks">Healthy Snacks</Link>
-        <Link href="/category/nuts">Nuts</Link>
-        <Link href="/category/dry-fruits-berries">Dry Fruits & Berries</Link>
+        {categories.slice(0, 5).map((category) => (
+          <Link href={`/category/${category.slug}`} key={category.slug}>
+            {category.name}
+          </Link>
+        ))}
       </div>
       <div>
         <b>SUPPORT</b>

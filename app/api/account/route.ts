@@ -7,10 +7,10 @@ import {
   orderItems,
   taxInvoices,
 } from "../../../db/schema";
-import { getChatGPTUser } from "../../chatgpt-auth";
+import { getCustomerUser } from "../../customer-auth";
 
 async function requireApiUser() {
-  const user = await getChatGPTUser();
+  const user = await getCustomerUser();
   if (!user) return null;
   return user;
 }

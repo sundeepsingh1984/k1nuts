@@ -8,7 +8,7 @@ import {
   taxInvoices,
 } from "../../../db/schema";
 import { getAdminUser } from "../../admin-auth";
-import { getChatGPTUser } from "../../chatgpt-auth";
+import { getCustomerUser } from "../../customer-auth";
 import { PrintInvoiceButton } from "./print-button";
 
 export const dynamic = "force-dynamic";
@@ -86,12 +86,12 @@ export default async function InvoicePage({
   const invoiceId = Number(id);
   if (!Number.isInteger(invoiceId)) notFound();
   const [user, admin] = await Promise.all([
-    getChatGPTUser(),
+    getCustomerUser(),
     getAdminUser(),
   ]);
   if (!user && !admin) {
     redirect(
-      `/signin-with-chatgpt?return_to=${encodeURIComponent(`/invoice/${invoiceId}`)}`,
+      `/login?return_to=${encodeURIComponent(`/invoice/${invoiceId}`)}`,
     );
   }
   const db = getDb();

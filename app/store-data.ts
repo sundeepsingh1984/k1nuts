@@ -27,7 +27,17 @@ export type StoreProduct = {
   variants?: ProductVariant[];
 };
 
-export const categories = [
+export type StoreCategory = {
+  slug: string;
+  name: string;
+  kicker: string;
+  description: string;
+  emoji: string;
+  tone: string;
+  image: string;
+};
+
+export const categories: StoreCategory[] = [
   {
     slug: "healthy-snacks",
     name: "Healthy Snacks",

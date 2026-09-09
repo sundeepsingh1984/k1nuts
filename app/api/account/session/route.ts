@@ -1,7 +1,7 @@
-import { getChatGPTUser } from "../../../chatgpt-auth";
+import { getCustomerUser } from "../../../customer-auth";
 
 export async function GET() {
-  const user = await getChatGPTUser();
+  const user = await getCustomerUser();
   return Response.json(
     user
       ? {

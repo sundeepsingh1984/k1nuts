@@ -165,15 +165,31 @@ type DashboardData = {
     name: string;
     category: string;
     categorySlug: string;
+    description: string;
+    short: string;
+    accent: string;
     image: string;
+    badge: string;
     active: boolean;
     variants: Array<{
       label: string;
+      weightGrams: number;
       sku: string;
       mrpPaise: number;
       pricePaise: number;
       stock: number;
     }>;
+  }>;
+  customCategories: Array<{
+    slug: string;
+    name: string;
+    kicker: string;
+    description: string;
+    emoji: string;
+    tone: string;
+    image: string;
+    active: boolean;
+    sortOrder: number;
   }>;
   orders: Array<{
     id: number;
@@ -235,6 +251,47 @@ type DashboardData = {
   };
 };
 
+type ProductEditorItem = {
+  slug: string;
+  name: string;
+  category: string;
+  categorySlug: string;
+  description: string;
+  short: string;
+  image: string;
+  badge: string;
+  accent: string;
+  active: boolean;
+  managed: string;
+  variants: Array<{
+    label: string;
+    weightGrams: number;
+    sku: string;
+    mrpPaise: number;
+    pricePaise: number;
+    stock: number;
+  }>;
+};
+
+function adminCategories(data: DashboardData) {
+  const overrides = new Map(
+    data.customCategories.map((category) => [category.slug, category]),
+  );
+  const coreSlugs = new Set(categories.map((category) => category.slug));
+  return [
+    ...categories.map((category, index) => ({
+      ...category,
+      active: overrides.get(category.slug)?.active ?? true,
+      sortOrder: overrides.get(category.slug)?.sortOrder ?? index * 10,
+      ...(overrides.get(category.slug) ?? {}),
+      managed: overrides.has(category.slug) ? "ADMIN" : "CORE",
+    })),
+    ...data.customCategories
+      .filter((category) => !coreSlugs.has(category.slug))
+      .map((category) => ({ ...category, managed: "ADMIN" })),
+  ].sort((left, right) => left.sortOrder - right.sortOrder);
+}
+
 const emptyData: DashboardData = {
   metrics: {
     salesPaise: 0,
@@ -247,6 +304,7 @@ const emptyData: DashboardData = {
   },
   daily: [],
   customProducts: [],
+  customCategories: [],
   orders: [],
   returns: [],
   insights: {
@@ -294,34 +352,18 @@ const emptyCampaignData: CampaignData = {
   campaignLimit: 250,
 };
 
-const demoActivity: Activity[] = [
-  {
-    id: 1,
-    event: "page_view",
-    path: "/product/kashmiri-mewa-bites",
-    createdAt: Date.now() - 120000,
-  },
-  {
-    id: 2,
-    event: "add_to_cart",
-    path: "/product/chocolate-truffle-bites",
-    productSlug: "chocolate-truffle-bites",
-    createdAt: Date.now() - 420000,
-  },
-];
-
 export default function AdminDashboard({
   displayName,
 }: {
   displayName: string;
 }) {
-  const [activity, setActivity] = useState<Activity[]>(demoActivity);
+  const [activity, setActivity] = useState<Activity[]>([]);
   const [data, setData] = useState<DashboardData>(emptyData);
   const [campaignData, setCampaignData] =
     useState<CampaignData>(emptyCampaignData);
   const [tab, setTab] = useState("overview");
   const [toast, setToast] = useState("");
-  const [renderedAt] = useState(Date.now);
+  const [renderedAt, setRenderedAt] = useState(0);
 
   async function signOut() {
     await fetch("/api/admin/session", { method: "DELETE" });
@@ -341,12 +383,16 @@ export default function AdminDashboard({
   }, []);
 
   useEffect(() => {
+    setRenderedAt(Date.now());
     fetch("/api/events")
       .then(async (response) => {
         if (!response.ok) throw new Error("Unable to load activity.");
         return (await response.json()) as { events?: Activity[] };
       })
-      .then((result) => result.events?.length && setActivity(result.events))
+      .then((result) => {
+        if (result.events) setActivity(result.events);
+        setRenderedAt(Date.now());
+      })
       .catch(() => undefined);
     const timer = window.setTimeout(() => void loadDashboard(), 0);
     const campaignTimer = window.setTimeout(() => void loadCampaigns(), 0);
@@ -377,6 +423,7 @@ export default function AdminDashboard({
             "overview",
             "insights",
             "products",
+            "categories",
             "orders",
             "support",
             "gst",
@@ -592,6 +639,10 @@ function AdminModule({
       "Product catalogue",
       "Add products, pack sizes, SKUs, stock and pricing.",
     ],
+    categories: [
+      "Store categories",
+      "Add or edit collections and publish them automatically across menus and pages.",
+    ],
     orders: [
       "Order operations",
       "Create shipments and keep fulfilment moving.",
@@ -631,6 +682,7 @@ function AdminModule({
   };
   const [title, note] = labels[tab] ?? [tab, ""];
   const [showProductForm, setShowProductForm] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<ProductEditorItem | null>(null);
 
   return (
     <div className="adminModule">
@@ -641,7 +693,10 @@ function AdminModule({
           <p>{note}</p>
         </div>
         {tab === "products" && (
-          <button onClick={() => setShowProductForm((open) => !open)}>
+          <button onClick={() => {
+            setEditingProduct(null);
+            setShowProductForm((open) => !open);
+          }}>
             {showProductForm ? "CLOSE FORM" : "+ ADD PRODUCT"}
           </button>
         )}
@@ -653,6 +708,9 @@ function AdminModule({
         <>
           {showProductForm && (
             <ProductForm
+              key={editingProduct?.slug ?? "new-product"}
+              initialProduct={editingProduct}
+              categories={adminCategories(data)}
               onSaved={async (message) => {
                 setToast(message);
                 setShowProductForm(false);
@@ -660,8 +718,16 @@ function AdminModule({
               }}
             />
           )}
-          <ProductCatalogueTable data={data} />
+          <ProductCatalogueTable
+            data={data}
+            onEdit={(product) => {
+              setEditingProduct(product);
+              setShowProductForm(true);
+            }}
+          />
         </>
+      ) : tab === "categories" ? (
+        <CategoryManager data={data} reload={reload} setToast={setToast} />
       ) : tab === "orders" ? (
         <OrdersTable data={data} reload={reload} setToast={setToast} />
       ) : tab === "support" ? (
@@ -1148,22 +1214,47 @@ function CampaignPanel({
   );
 }
 
-function ProductCatalogueTable({ data }: { data: DashboardData }) {
-  const rows = [
-    ...products.map((product) => ({
+function ProductCatalogueTable({
+  data,
+  onEdit,
+}: {
+  data: DashboardData;
+  onEdit: (product: ProductEditorItem) => void;
+}) {
+  const overrides = new Map(
+    data.customProducts.map((product) => [product.slug, product]),
+  );
+  const coreSlugs = new Set(products.map((product) => product.slug));
+  const coreRows: ProductEditorItem[] = products.map((product) => {
+    const override = overrides.get(product.slug);
+    if (override) return { ...override, managed: "ADMIN" };
+    return {
       slug: product.slug,
       name: product.name,
       category: product.category,
+      categorySlug: product.categorySlug,
+      description: product.description,
+      short: product.short,
+      accent: product.accent,
       image: product.image || "/k1-logo.jpeg",
+      badge: product.badge || "K1 SELECTED",
       active: true,
       managed: "CORE",
       variants: getProductVariants(product).map((variant) => ({
         label: variant.label,
+        weightGrams: variant.weightGrams,
+        sku: variant.sku,
+        mrpPaise: variant.mrp * 100,
         pricePaise: variant.price * 100,
         stock: variant.stock,
       })),
-    })),
-    ...data.customProducts.map((product) => ({ ...product, managed: "ADMIN" })),
+    };
+  });
+  const rows: ProductEditorItem[] = [
+    ...coreRows,
+    ...data.customProducts
+      .filter((product) => !coreSlugs.has(product.slug))
+      .map((product) => ({ ...product, managed: "ADMIN" })),
   ];
   return (
     <div className="productTable productTablePro">
@@ -1172,6 +1263,7 @@ function ProductCatalogueTable({ data }: { data: DashboardData }) {
         <b>CATEGORY</b>
         <b>VARIANTS</b>
         <b>STOCK / STATUS</b>
+        <b>ACTIONS</b>
       </div>
       {rows.map((product) => (
         <div key={`${product.managed}-${product.slug}`}>
@@ -1197,52 +1289,92 @@ function ProductCatalogueTable({ data }: { data: DashboardData }) {
             </b>
             <em>{product.active ? "ACTIVE" : "DRAFT"}</em>
           </span>
+          <span className="adminProductActions">
+            <button onClick={() => onEdit(product)}>EDIT</button>
+            <a href={`/product/${product.slug}`} target="_blank" rel="noreferrer">
+              VIEW
+            </a>
+          </span>
         </div>
       ))}
     </div>
   );
 }
 
-function ProductForm({ onSaved }: { onSaved: (message: string) => void }) {
+function ProductForm({
+  onSaved,
+  initialProduct,
+  categories: catalogueCategories,
+}: {
+  onSaved: (message: string) => void;
+  initialProduct: ProductEditorItem | null;
+  categories: Array<{ slug: string; name: string; active: boolean }>;
+}) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  const [form, setForm] = useState({
-    name: "",
-    slug: "",
-    categorySlug: "nuts",
-    short: "",
-    description: "",
-    image: "",
-    badge: "K1 SELECTED",
-    accent: "#8a5a2b",
-    variants: [
-      { label: "250g", weightGrams: 250, mrp: 599, stock: 25, sku: "" },
-      { label: "500g", weightGrams: 500, mrp: 1198, stock: 20, sku: "" },
-      { label: "1kg", weightGrams: 1000, mrp: 2396, stock: 10, sku: "" },
-    ],
-  });
+  const [form, setForm] = useState(() =>
+    initialProduct
+      ? {
+          name: initialProduct.name,
+          slug: initialProduct.slug,
+          categorySlug: initialProduct.categorySlug,
+          short: initialProduct.short,
+          description: initialProduct.description,
+          image: initialProduct.image,
+          badge: initialProduct.badge,
+          accent: initialProduct.accent,
+          active: initialProduct.active,
+          variants: initialProduct.variants.map((variant) => ({
+            label: variant.label,
+            weightGrams: variant.weightGrams,
+            mrp: variant.mrpPaise / 100,
+            stock: variant.stock,
+            sku: variant.sku,
+          })),
+        }
+      : {
+          name: "",
+          slug: "",
+          categorySlug: catalogueCategories.find((category) => category.active)?.slug || "nuts",
+          short: "",
+          description: "",
+          image: "",
+          badge: "K1 SELECTED",
+          accent: "#356055",
+          active: true,
+          variants: [
+            { label: "250g", weightGrams: 250, mrp: 599, stock: 25, sku: "" },
+            { label: "500g", weightGrams: 500, mrp: 1198, stock: 20, sku: "" },
+            { label: "1kg", weightGrams: 1000, mrp: 2396, stock: 10, sku: "" },
+          ],
+        },
+  );
 
   async function submit(event: FormEvent) {
     event.preventDefault();
     setBusy(true);
     setError("");
     const response = await fetch("/api/admin/products", {
-      method: "POST",
+      method: initialProduct ? "PUT" : "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify(form),
     });
     const result = (await response.json()) as { error?: string };
     setBusy(false);
     if (!response.ok) return setError(result.error || "Unable to add product.");
-    onSaved(`${form.name} and all three variants are now live`);
+    onSaved(
+      initialProduct
+        ? `${form.name} was updated across the storefront`
+        : `${form.name} and all three variants are now live`,
+    );
   }
 
   return (
     <form className="adminProductForm" onSubmit={submit}>
       <header>
         <div>
-          <small>NEW CATALOGUE ITEM</small>
-          <h3>Product and pack variants</h3>
+          <small>{initialProduct ? "EDIT CATALOGUE ITEM" : "NEW CATALOGUE ITEM"}</small>
+          <h3>{initialProduct ? `Editing ${initialProduct.name}` : "Product and pack variants"}</h3>
         </div>
         <span>SALE PRICE IS AUTOMATICALLY 50% OF MRP</span>
       </header>
@@ -1270,6 +1402,7 @@ function ProductForm({ onSaved }: { onSaved: (message: string) => void }) {
             value={form.slug}
             onChange={(event) => setForm({ ...form, slug: event.target.value })}
             required
+            disabled={Boolean(initialProduct)}
           />
         </label>
         <label>
@@ -1280,7 +1413,7 @@ function ProductForm({ onSaved }: { onSaved: (message: string) => void }) {
               setForm({ ...form, categorySlug: event.target.value })
             }
           >
-            {categories.map((category) => (
+            {catalogueCategories.filter((category) => category.active || category.slug === form.categorySlug).map((category) => (
               <option value={category.slug} key={category.slug}>
                 {category.name}
               </option>
@@ -1319,7 +1452,6 @@ function ProductForm({ onSaved }: { onSaved: (message: string) => void }) {
         <label className="wide">
           Branded product image URL
           <input
-            type="url"
             value={form.image}
             onChange={(event) =>
               setForm({ ...form, image: event.target.value })
@@ -1381,7 +1513,211 @@ function ProductForm({ onSaved }: { onSaved: (message: string) => void }) {
       </div>
       {error && <p className="adminFormError">{error}</p>}
       <button className="adminPrimary" disabled={busy}>
-        {busy ? "CREATING…" : "CREATE PRODUCT + 3 VARIANTS →"}
+        {busy
+          ? initialProduct
+            ? "SAVING…"
+            : "CREATING…"
+          : initialProduct
+            ? "SAVE PRODUCT CHANGES →"
+            : "CREATE PRODUCT + 3 VARIANTS →"}
+      </button>
+    </form>
+  );
+}
+
+type AdminCategoryItem = ReturnType<typeof adminCategories>[number];
+
+function CategoryManager({
+  data,
+  reload,
+  setToast,
+}: {
+  data: DashboardData;
+  reload: () => Promise<void>;
+  setToast: (value: string) => void;
+}) {
+  const [editing, setEditing] = useState<AdminCategoryItem | null>(null);
+  const [creating, setCreating] = useState(false);
+  const rows = adminCategories(data);
+
+  async function toggle(category: AdminCategoryItem) {
+    const response = await fetch("/api/admin/categories", {
+      method: "PUT",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ ...category, active: !category.active }),
+    });
+    const result = (await response.json()) as { error?: string };
+    setToast(
+      response.ok
+        ? `${category.name} is now ${category.active ? "hidden" : "live"}`
+        : result.error || "Category status could not be changed",
+    );
+    if (response.ok) await reload();
+  }
+
+  return (
+    <div className="categoryAdminWorkspace">
+      <div className="categoryAdminActions">
+        <p>
+          Categories saved here appear automatically in the Shop menu, home
+          page, sitemap and their own collection page.
+        </p>
+        <button
+          onClick={() => {
+            setEditing(null);
+            setCreating((value) => !value);
+          }}
+        >
+          {creating ? "CLOSE FORM" : "+ ADD CATEGORY"}
+        </button>
+      </div>
+      {(creating || editing) && (
+        <CategoryForm
+          key={editing?.slug ?? "new-category"}
+          category={editing}
+          onSaved={async (message) => {
+            setToast(message);
+            setCreating(false);
+            setEditing(null);
+            await reload();
+          }}
+        />
+      )}
+      <div className="categoryAdminGrid">
+        {rows.map((category, index) => (
+          <article key={category.slug}>
+            <img src={category.image} alt="" loading="lazy" />
+            <div>
+              <small>{String(index + 1).padStart(2, "0")} · {category.managed} CATEGORY</small>
+              <h3>{category.name}</h3>
+              <p>{category.description}</p>
+              <span className={category.active ? "live" : "draft"}>
+                {category.active ? "LIVE ON STORE" : "HIDDEN"}
+              </span>
+            </div>
+            <footer>
+              <button onClick={() => {
+                setCreating(false);
+                setEditing(category);
+              }}>EDIT</button>
+              <button onClick={() => void toggle(category)}>
+                {category.active ? "HIDE" : "PUBLISH"}
+              </button>
+              {category.active && (
+                <a href={`/category/${category.slug}`} target="_blank" rel="noreferrer">VIEW ↗</a>
+              )}
+            </footer>
+          </article>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function CategoryForm({
+  category,
+  onSaved,
+}: {
+  category: AdminCategoryItem | null;
+  onSaved: (message: string) => void;
+}) {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const [form, setForm] = useState(() =>
+    category
+      ? { ...category }
+      : {
+          name: "",
+          slug: "",
+          kicker: "K1 curated collection",
+          description: "",
+          emoji: "✦",
+          tone: "#356055",
+          image: "",
+          active: true,
+          sortOrder: 100,
+          managed: "ADMIN",
+        },
+  );
+
+  async function submit(event: FormEvent) {
+    event.preventDefault();
+    setBusy(true);
+    setError("");
+    const response = await fetch("/api/admin/categories", {
+      method: category ? "PUT" : "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(form),
+    });
+    const result = (await response.json()) as { error?: string };
+    setBusy(false);
+    if (!response.ok) {
+      setError(result.error || "Category could not be saved.");
+      return;
+    }
+    onSaved(
+      category
+        ? `${form.name} was updated everywhere`
+        : `${form.name} is now available across the store`,
+    );
+  }
+
+  return (
+    <form className="adminCategoryForm" onSubmit={submit}>
+      <header>
+        <div>
+          <small>{category ? "EDIT COLLECTION" : "NEW COLLECTION"}</small>
+          <h3>{category ? `Editing ${category.name}` : "Create a store category"}</h3>
+        </div>
+        <span>A CATEGORY PAGE AND MENU LINK ARE CREATED AUTOMATICALLY</span>
+      </header>
+      <div className="adminFormGrid">
+        <label>
+          Category name
+          <input
+            value={form.name}
+            onChange={(event) => setForm({
+              ...form,
+              name: event.target.value,
+              slug: category
+                ? form.slug
+                : event.target.value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, ""),
+            })}
+            required
+          />
+        </label>
+        <label>
+          URL slug
+          <input value={form.slug} disabled={Boolean(category)} onChange={(event) => setForm({ ...form, slug: event.target.value })} required />
+        </label>
+        <label>
+          Short kicker
+          <input value={form.kicker} onChange={(event) => setForm({ ...form, kicker: event.target.value })} required />
+        </label>
+        <label>
+          Display order
+          <input type="number" min="0" max="999" value={form.sortOrder} onChange={(event) => setForm({ ...form, sortOrder: Number(event.target.value) })} />
+        </label>
+        <label>
+          Accent colour
+          <input type="color" value={form.tone} onChange={(event) => setForm({ ...form, tone: event.target.value })} />
+        </label>
+        <label>
+          Menu symbol
+          <input value={form.emoji} maxLength={8} onChange={(event) => setForm({ ...form, emoji: event.target.value })} />
+        </label>
+        <label className="wide">
+          Description
+          <textarea value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} required />
+        </label>
+        <label className="wide">
+          Category image URL or local asset path
+          <input value={form.image} onChange={(event) => setForm({ ...form, image: event.target.value })} placeholder="/categories/your-category.webp" required />
+        </label>
+      </div>
+      {error && <p className="adminFormError">{error}</p>}
+      <button className="adminPrimary" disabled={busy}>
+        {busy ? "SAVING…" : category ? "SAVE CATEGORY CHANGES →" : "CREATE CATEGORY →"}
       </button>
     </form>
   );

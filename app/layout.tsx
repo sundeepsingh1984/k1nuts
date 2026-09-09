@@ -5,6 +5,7 @@ import { PerformanceReporter } from "./performance-reporter";
 import { absoluteUrl, safeJsonLd, SITE_URL } from "./seo";
 import { StorefrontProvider } from "./storefront-context";
 import { SupportChat } from "./support-chat";
+import { getCatalogueCategories } from "./catalogue-db";
 
 const display = Cormorant_Garamond({ variable: "--font-display", subsets: ["latin"], weight: ["500", "600", "700"], style: ["normal", "italic"] });
 const sans = DM_Sans({ variable: "--font-sans", subsets: ["latin"], weight: ["400", "500", "600", "700"] });
@@ -53,7 +54,8 @@ const organizationSchema = {
   ],
 };
 
-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  const categories = await getCatalogueCategories();
   return (
     <html lang="en">
       <body className={`${display.variable} ${sans.variable}`}>
@@ -61,7 +63,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: safeJsonLd(organizationSchema) }}
         />
-        <StorefrontProvider>
+        <StorefrontProvider categories={categories}>
           <PerformanceReporter />
           {children}
           <SupportChat />

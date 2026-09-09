@@ -1,6 +1,6 @@
 import { env } from "cloudflare:workers";
 import { cookies } from "next/headers";
-import { getChatGPTUser } from "../../chatgpt-auth";
+import { getCustomerUser } from "../../customer-auth";
 
 export const dynamic = "force-dynamic";
 
@@ -71,7 +71,7 @@ async function getOrCreateConversation() {
 
   token = newVisitorToken();
   const now = Date.now();
-  const user = await getChatGPTUser();
+  const user = await getCustomerUser();
   const inserted = await env.DB.prepare(
     "INSERT INTO support_conversations (visitor_token_hash, user_id, customer_name, customer_email, status, last_message_at, created_at, updated_at) VALUES (?, ?, ?, ?, 'open', ?, ?, ?)",
   )

@@ -1,7 +1,7 @@
 import { and, eq } from "drizzle-orm";
 import { getDb } from "../../../../db";
 import { customerAddresses } from "../../../../db/schema";
-import { getChatGPTUser } from "../../../chatgpt-auth";
+import { getCustomerUser } from "../../../customer-auth";
 
 type AddressInput = {
   id?: number;
@@ -44,7 +44,7 @@ function isValidAddress(address: ReturnType<typeof cleanAddress>) {
 }
 
 export async function POST(request: Request) {
-  const user = await getChatGPTUser();
+  const user = await getCustomerUser();
   if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
   try {
     const address = cleanAddress((await request.json()) as AddressInput);
@@ -78,7 +78,7 @@ export async function POST(request: Request) {
 }
 
 export async function PUT(request: Request) {
-  const user = await getChatGPTUser();
+  const user = await getCustomerUser();
   if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
   try {
     const body = (await request.json()) as AddressInput;
@@ -115,7 +115,7 @@ export async function PUT(request: Request) {
 }
 
 export async function DELETE(request: Request) {
-  const user = await getChatGPTUser();
+  const user = await getCustomerUser();
   if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
   const id = Number(new URL(request.url).searchParams.get("id"));
   if (!Number.isInteger(id)) {

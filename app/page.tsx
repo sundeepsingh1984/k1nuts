@@ -1,13 +1,15 @@
 import Link from "next/link";
 import { ReviewCarousel } from "./review-carousel";
-import { categories, formatInr, healthyProducts } from "./store-data";
+import { formatInr, healthyProducts } from "./store-data";
+import { getCatalogueCategories } from "./catalogue-db";
 import {
   AddToCartButton,
   StoreFooter,
   StoreHeader,
 } from "./storefront-context";
 
-export default function Home() {
+export default async function Home() {
+  const categories = await getCatalogueCategories();
   return (
     <main className="brandSite k1Home">
       <StoreHeader />

@@ -321,6 +321,31 @@ export const adminProducts = sqliteTable(
   ],
 );
 
+export const storeCategories = sqliteTable(
+  "store_categories",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    slug: text("slug").notNull(),
+    name: text("name").notNull(),
+    kicker: text("kicker").notNull(),
+    description: text("description").notNull(),
+    emoji: text("emoji").notNull().default("✦"),
+    tone: text("tone").notNull().default("#356055"),
+    image: text("image").notNull(),
+    active: integer("active", { mode: "boolean" }).notNull().default(true),
+    sortOrder: integer("sort_order").notNull().default(100),
+    createdAt: integer("created_at").notNull(),
+    updatedAt: integer("updated_at").notNull(),
+  },
+  (table) => [
+    uniqueIndex("idx_store_categories_slug").on(table.slug),
+    index("idx_store_categories_active_order").on(
+      table.active,
+      table.sortOrder,
+    ),
+  ],
+);
+
 export const productVariants = sqliteTable(
   "product_variants",
   {
@@ -460,5 +485,81 @@ export const supportMessages = sqliteTable(
       table.createdAt,
     ),
     index("idx_support_messages_sender_read").on(table.sender, table.readAt),
+  ],
+);
+
+export const customerAccounts = sqliteTable(
+  "customer_accounts",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    userId: text("user_id").notNull(),
+    email: text("email").notNull(),
+    displayName: text("display_name").notNull(),
+    passwordHash: text("password_hash"),
+    emailVerified: integer("email_verified", { mode: "boolean" })
+      .notNull()
+      .default(false),
+    createdAt: integer("created_at").notNull(),
+    updatedAt: integer("updated_at").notNull(),
+  },
+  (table) => [
+    uniqueIndex("idx_customer_accounts_user_id").on(table.userId),
+    uniqueIndex("idx_customer_accounts_email").on(table.email),
+  ],
+);
+
+export const customerSessions = sqliteTable(
+  "customer_sessions",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    tokenHash: text("token_hash").notNull(),
+    userId: text("user_id").notNull(),
+    expiresAt: integer("expires_at").notNull(),
+    createdAt: integer("created_at").notNull(),
+    lastSeenAt: integer("last_seen_at").notNull(),
+  },
+  (table) => [
+    uniqueIndex("idx_customer_sessions_token").on(table.tokenHash),
+    index("idx_customer_sessions_user_expiry").on(table.userId, table.expiresAt),
+  ],
+);
+
+export const emailOtpCodes = sqliteTable(
+  "email_otp_codes",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    email: text("email").notNull(),
+    codeHash: text("code_hash").notNull(),
+    purpose: text("purpose").notNull(),
+    expiresAt: integer("expires_at").notNull(),
+    attempts: integer("attempts").notNull().default(0),
+    consumedAt: integer("consumed_at"),
+    createdAt: integer("created_at").notNull(),
+  },
+  (table) => [
+    index("idx_email_otp_email_purpose_created").on(
+      table.email,
+      table.purpose,
+      table.createdAt,
+    ),
+  ],
+);
+
+export const customerOauthAccounts = sqliteTable(
+  "customer_oauth_accounts",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    provider: text("provider").notNull(),
+    providerSubject: text("provider_subject").notNull(),
+    userId: text("user_id").notNull(),
+    createdAt: integer("created_at").notNull(),
+    updatedAt: integer("updated_at").notNull(),
+  },
+  (table) => [
+    uniqueIndex("idx_customer_oauth_provider_subject").on(
+      table.provider,
+      table.providerSubject,
+    ),
+    index("idx_customer_oauth_user").on(table.userId),
   ],
 );
