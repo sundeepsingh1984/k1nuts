@@ -1,7 +1,4 @@
-import { env } from "cloudflare:workers";
-
-type RuntimeEnv = Record<string, string | undefined>;
-const runtime = env as unknown as RuntimeEnv;
+import { getIntegrationConfig, getIntegrationFlags } from "./integration-settings";
 
 export type ShippingAddress = {
   name: string;
@@ -32,29 +29,30 @@ export type ShippingOrder = {
   items: ShippingItem[];
 };
 
-function required(name: string) {
-  const value = runtime[name]?.trim();
-  if (!value) throw new Error(`${name} is not configured.`);
+function required(config: Record<string, string>, key: string, label: string) {
+  const value = config[key]?.trim();
+  if (!value) throw new Error(`${label} is not configured.`);
   return value;
 }
 
-export function getShippingConfiguration() {
+export async function getShippingConfiguration() {
+  const flags = await getIntegrationFlags();
   return {
-    shiprocket:
-      Boolean(runtime.SHIPROCKET_EMAIL) &&
-      Boolean(runtime.SHIPROCKET_PASSWORD) &&
-      Boolean(runtime.SHIPROCKET_PICKUP_LOCATION),
-    amazon:
-      Boolean(runtime.AMAZON_LWA_CLIENT_ID) &&
-      Boolean(runtime.AMAZON_LWA_CLIENT_SECRET) &&
-      Boolean(runtime.AMAZON_LWA_REFRESH_TOKEN),
+    shiprocket: flags.shiprocket,
+    amazon: flags.amazon,
   };
 }
 
-let shiprocketToken: { value: string; expiresAt: number } | null = null;
+let shiprocketToken: { value: string; expiresAt: number; fingerprint: string } | null = null;
 
 async function getShiprocketToken() {
-  if (shiprocketToken && shiprocketToken.expiresAt > Date.now()) {
+  const config = await getIntegrationConfig("shiprocket");
+  const fingerprint = `${config.email}:${config.password}`;
+  if (
+    shiprocketToken &&
+    shiprocketToken.expiresAt > Date.now() &&
+    shiprocketToken.fingerprint === fingerprint
+  ) {
     return shiprocketToken.value;
   }
   const response = await fetch(
@@ -63,8 +61,8 @@ async function getShiprocketToken() {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
-        email: required("SHIPROCKET_EMAIL"),
-        password: required("SHIPROCKET_PASSWORD"),
+        email: required(config, "email", "Shiprocket email"),
+        password: required(config, "password", "Shiprocket password"),
       }),
     },
   );
@@ -78,6 +76,7 @@ async function getShiprocketToken() {
   shiprocketToken = {
     value: result.token,
     expiresAt: Date.now() + 8 * 24 * 60 * 60 * 1000,
+    fingerprint,
   };
   return result.token;
 }
@@ -111,6 +110,7 @@ export async function testShiprocketConnection() {
 }
 
 export async function createShiprocketShipment(order: ShippingOrder) {
+  const config = await getIntegrationConfig("shiprocket");
   const weightKg = Math.max(
     0.25,
     order.items.reduce(
@@ -126,7 +126,7 @@ export async function createShiprocketShipment(order: ShippingOrder) {
         .toISOString()
         .slice(0, 19)
         .replace("T", " "),
-      pickup_location: required("SHIPROCKET_PICKUP_LOCATION"),
+      pickup_location: required(config, "pickupLocation", "Shiprocket pickup location"),
       billing_customer_name: order.address.name,
       billing_address: order.address.line1,
       billing_address_2: order.address.line2 || "",
@@ -182,16 +182,22 @@ export async function trackShiprocketShipment(awb: string) {
   return shiprocketRequest(`/courier/track/awb/${encodeURIComponent(awb)}`);
 }
 
-let amazonToken: { value: string; expiresAt: number } | null = null;
+let amazonToken: { value: string; expiresAt: number; fingerprint: string } | null = null;
 
 async function getAmazonAccessToken() {
-  if (amazonToken && amazonToken.expiresAt > Date.now())
+  const config = await getIntegrationConfig("amazon");
+  const fingerprint = `${config.clientId}:${config.clientSecret}:${config.refreshToken}`;
+  if (
+    amazonToken &&
+    amazonToken.expiresAt > Date.now() &&
+    amazonToken.fingerprint === fingerprint
+  )
     return amazonToken.value;
   const body = new URLSearchParams({
     grant_type: "refresh_token",
-    refresh_token: required("AMAZON_LWA_REFRESH_TOKEN"),
-    client_id: required("AMAZON_LWA_CLIENT_ID"),
-    client_secret: required("AMAZON_LWA_CLIENT_SECRET"),
+    refresh_token: required(config, "refreshToken", "Amazon refresh token"),
+    client_id: required(config, "clientId", "Amazon client ID"),
+    client_secret: required(config, "clientSecret", "Amazon client secret"),
   });
   const response = await fetch("https://api.amazon.com/auth/o2/token", {
     method: "POST",
@@ -210,16 +216,18 @@ async function getAmazonAccessToken() {
     value: result.access_token,
     expiresAt:
       Date.now() + Math.max(300, (result.expires_in ?? 3600) - 120) * 1000,
+    fingerprint,
   };
   return result.access_token;
 }
 
 async function amazonRequest(path: string, init?: RequestInit) {
   const accessToken = await getAmazonAccessToken();
+  const config = await getIntegrationConfig("amazon");
   const endpoint =
-    runtime.AMAZON_SP_API_ENDPOINT?.replace(/\/$/, "") ||
+    config.endpoint?.replace(/\/$/, "") ||
     "https://sellingpartnerapi-eu.amazon.com";
-  const businessId = runtime.AMAZON_SHIPPING_BUSINESS_ID?.trim();
+  const businessId = config.businessId?.trim();
   const response = await fetch(`${endpoint}${path}`, {
     ...init,
     headers: {
@@ -256,16 +264,16 @@ function amazonAddress(address: ShippingAddress) {
   };
 }
 
-function amazonShipFrom() {
+function amazonShipFrom(config: Record<string, string>) {
   return {
-    name: required("K1_SHIP_FROM_NAME"),
-    addressLine1: required("K1_SHIP_FROM_ADDRESS"),
-    city: required("K1_SHIP_FROM_CITY"),
-    stateOrRegion: required("K1_SHIP_FROM_STATE"),
-    postalCode: required("K1_SHIP_FROM_PIN"),
+    name: required(config, "shipFromName", "Dispatch name"),
+    addressLine1: required(config, "shipFromAddress", "Dispatch address"),
+    city: required(config, "shipFromCity", "Dispatch city"),
+    stateOrRegion: required(config, "shipFromState", "Dispatch state"),
+    postalCode: required(config, "shipFromPin", "Dispatch PIN"),
     countryCode: "IN",
-    phoneNumber: required("K1_SHIP_FROM_PHONE"),
-    email: required("K1_SHIP_FROM_EMAIL"),
+    phoneNumber: required(config, "shipFromPhone", "Dispatch phone"),
+    email: required(config, "shipFromEmail", "Dispatch email"),
   };
 }
 
@@ -275,6 +283,7 @@ export async function testAmazonConnection() {
 }
 
 export async function getAmazonShippingRates(order: ShippingOrder) {
+  const config = await getIntegrationConfig("amazon");
   const totalWeight = order.items.reduce(
     (sum, item) => sum + item.weightGrams * item.quantity,
     0,
@@ -283,7 +292,7 @@ export async function getAmazonShippingRates(order: ShippingOrder) {
     method: "POST",
     body: JSON.stringify({
       shipTo: amazonAddress(order.address),
-      shipFrom: amazonShipFrom(),
+      shipFrom: amazonShipFrom(config),
       packages: [
         {
           dimensions: {

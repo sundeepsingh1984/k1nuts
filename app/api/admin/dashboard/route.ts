@@ -213,8 +213,8 @@ export async function GET() {
         },
       },
       integrations: {
-        ...getShippingConfiguration(),
-        ...getMarketingConfiguration(),
+        ...(await getShippingConfiguration()),
+        ...(await getMarketingConfiguration()),
       },
     },
     { headers: { "cache-control": "private, no-store" } },

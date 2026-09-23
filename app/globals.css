@@ -6773,6 +6773,314 @@ a {
   background: #80aa59;
 }
 
+.integrationManager {
+  --integration-ink: #20382f;
+  --integration-muted: #687a70;
+  --integration-line: #dfe6e1;
+}
+.integrationSummary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 28px;
+  padding: 30px 34px;
+  overflow: hidden;
+  border: 1px solid #d9e3dc;
+  border-radius: 16px;
+  color: #eff7f1;
+  background:
+    radial-gradient(circle at 82% 8%, rgba(183, 211, 65, 0.2), transparent 32%),
+    linear-gradient(125deg, #18372f, #284b3e);
+}
+.integrationSummary small,
+.integrationEditor header small {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+}
+.integrationSummary small {
+  color: #c7d8cc;
+}
+.integrationSummary h3 {
+  margin: 7px 0 8px;
+  font: 600 30px var(--font-display);
+}
+.integrationSummary p {
+  max-width: 720px;
+  margin: 0;
+  color: #bfd0c4;
+  font-size: 13px;
+  line-height: 1.6;
+}
+.integrationSummary > b {
+  flex: 0 0 auto;
+  font: 600 42px var(--font-display);
+  white-space: nowrap;
+}
+.integrationSummary > b span {
+  color: #c2d2c7;
+  font: 500 13px var(--font-sans);
+}
+.integrationManagerGrid {
+  display: grid;
+  grid-template-columns: minmax(260px, 0.38fr) minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+.integrationProviderList {
+  display: grid;
+  gap: 8px;
+}
+.integrationProviderList > button {
+  display: grid;
+  grid-template-columns: 10px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 13px;
+  width: 100%;
+  min-height: 82px;
+  padding: 15px 16px;
+  border: 1px solid var(--integration-line);
+  border-radius: 12px;
+  text-align: left;
+  color: var(--integration-ink);
+  background: #fff;
+  box-shadow: 0 8px 28px rgba(30, 57, 46, 0.035);
+  transition: border-color 160ms ease, transform 160ms ease, box-shadow 160ms ease;
+}
+.integrationProviderList > button:hover,
+.integrationProviderList > button.active {
+  border-color: #8ca796;
+  box-shadow: 0 12px 32px rgba(30, 57, 46, 0.09);
+  transform: translateY(-1px);
+}
+.integrationProviderList > button.active {
+  background: #f7faf8;
+}
+.integrationProviderList > button > span:nth-child(2) {
+  display: grid;
+  min-width: 0;
+  gap: 3px;
+}
+.integrationProviderList small,
+.integrationProviderList em {
+  color: #79877e;
+  font-size: 9px;
+  font-style: normal;
+  font-weight: 750;
+  letter-spacing: 0.09em;
+}
+.integrationProviderList b {
+  overflow: hidden;
+  font-size: 14px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.integrationProviderList > button > i {
+  color: #9aa79f;
+  font-style: normal;
+}
+.integrationDot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #c3a363;
+  box-shadow: 0 0 0 4px #f6efe3;
+}
+.integrationDot.ready {
+  background: #6c9d55;
+  box-shadow: 0 0 0 4px #e8f2e2;
+}
+.integrationEditor,
+.integrationEmpty {
+  min-height: 420px;
+  border: 1px solid var(--integration-line);
+  border-radius: 16px;
+  background: #fff;
+}
+.integrationEditor {
+  overflow: hidden;
+}
+.integrationEditor > header {
+  display: flex;
+  justify-content: space-between;
+  gap: 22px;
+  padding: 29px 30px 24px;
+  border-bottom: 1px solid #edf1ee;
+}
+.integrationEditor header small {
+  color: #8b6a34;
+}
+.integrationEditor h3,
+.integrationEmpty h3 {
+  margin: 6px 0 6px;
+  color: var(--integration-ink);
+  font: 600 28px var(--font-display);
+}
+.integrationEditor header p,
+.integrationEmpty p {
+  max-width: 650px;
+  margin: 0;
+  color: var(--integration-muted);
+  font-size: 13px;
+  line-height: 1.55;
+}
+.integrationEditor header > span {
+  display: flex;
+  align-items: center;
+  align-self: flex-start;
+  gap: 7px;
+  padding: 8px 10px;
+  border-radius: 999px;
+  color: #856b3b;
+  background: #f6eedf;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+}
+.integrationEditor header > span i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #c3a363;
+}
+.integrationEditor header > span.ready {
+  color: #507042;
+  background: #eaf3e5;
+}
+.integrationEditor header > span.ready i {
+  background: #76a15e;
+}
+.integrationFormGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+  padding: 28px 30px 30px;
+}
+.integrationFormGrid label {
+  display: grid;
+  align-content: start;
+  gap: 8px;
+  min-width: 0;
+  color: #42564c;
+  font-size: 12px;
+  font-weight: 700;
+}
+.integrationFormGrid label > span {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.integrationFormGrid label > span em {
+  color: #a16c2a;
+  font-size: 9px;
+  font-style: normal;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.integrationFormGrid input,
+.integrationFormGrid select {
+  width: 100%;
+  min-height: 47px;
+  padding: 11px 13px;
+  border: 1px solid #d5ded8;
+  border-radius: 8px;
+  color: #213a30;
+  outline: none;
+  background: #fbfcfb;
+  font: 14px var(--font-sans);
+}
+.integrationFormGrid input:focus,
+.integrationFormGrid select:focus {
+  border-color: #668b78;
+  box-shadow: 0 0 0 3px rgba(102, 139, 120, 0.12);
+}
+.integrationFormGrid label > small {
+  min-height: 14px;
+  color: #7b8981;
+  font-size: 10px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+.integrationEditor > footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 20px 30px;
+  border-top: 1px solid #edf1ee;
+  background: #fafcfb;
+}
+.integrationEditor > footer p {
+  max-width: 430px;
+  margin: 0 auto 0 0;
+  color: #718078;
+  font-size: 11px;
+  line-height: 1.5;
+}
+.integrationEditor > footer button {
+  min-height: 42px;
+  padding: 0 15px;
+  border: 1px solid #cbd5cf;
+  border-radius: 7px;
+  color: #294238;
+  background: #fff;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+}
+.integrationEditor > footer button.adminPrimary {
+  border-color: #213c31;
+  color: #fff;
+  background: #213c31;
+}
+.integrationEditor > footer button:disabled {
+  cursor: not-allowed;
+  opacity: 0.48;
+}
+.integrationTestResult {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 12px;
+  margin: 0 30px 26px;
+  padding: 13px 15px;
+  border-radius: 8px;
+  color: #7a4e45;
+  background: #f8e9e7;
+  font-size: 11px;
+}
+.integrationTestResult.passed {
+  color: #4c6b41;
+  background: #ecf4e8;
+}
+.integrationTestResult span {
+  color: currentColor;
+  opacity: 0.72;
+}
+.integrationEmpty {
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  padding: 40px;
+  text-align: center;
+}
+.integrationEmpty > span {
+  display: grid;
+  place-items: center;
+  width: 54px;
+  height: 54px;
+  margin-bottom: 14px;
+  border-radius: 50%;
+  color: #315244;
+  background: #edf4ef;
+  font-size: 24px;
+}
+.integrationNotice {
+  border-radius: 16px;
+}
+
 @media (max-width: 1180px) {
   .insightTables {
     grid-template-columns: 1fr;
@@ -6787,6 +7095,12 @@ a {
   }
   .identityIntegration {
     grid-template-columns: 1fr 1fr;
+  }
+  .integrationManagerGrid {
+    grid-template-columns: 1fr;
+  }
+  .integrationProviderList {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
@@ -8205,6 +8519,43 @@ a {
 }
 
 @media (max-width: 620px) {
+  .integrationSummary,
+  .integrationEditor > header,
+  .integrationEditor > footer {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .integrationSummary {
+    padding: 25px 22px;
+  }
+
+  .integrationSummary > b {
+    font-size: 34px;
+  }
+
+  .integrationProviderList,
+  .integrationFormGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .integrationFormGrid,
+  .integrationEditor > header,
+  .integrationEditor > footer {
+    padding-right: 20px;
+    padding-left: 20px;
+  }
+
+  .integrationEditor > footer button {
+    width: 100%;
+  }
+
+  .integrationTestResult {
+    grid-template-columns: 1fr;
+    margin-right: 20px;
+    margin-left: 20px;
+  }
+
   .mobileStoreMenu > summary {
     min-height: 38px;
     padding: 0 10px;

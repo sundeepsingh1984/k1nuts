@@ -20,7 +20,7 @@ export default async function LoginPage({
   const params = await searchParams;
   const returnTo = safeReturnTo(params.return_to);
   if (await getCustomerUser()) redirect(returnTo);
-  const configuration = getCustomerAuthConfiguration();
+  const configuration = await getCustomerAuthConfiguration();
 
   return (
     <main className="brandSite customerLoginPage">

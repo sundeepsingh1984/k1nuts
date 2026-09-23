@@ -59,7 +59,7 @@ export async function GET() {
         email: emailAudience.length,
         whatsapp: whatsappAudience.length,
       },
-      configuration: getMarketingConfiguration(),
+      configuration: await getMarketingConfiguration(),
       campaignLimit: getCampaignLimit(),
     },
     { headers: { "cache-control": "private, no-store" } },
@@ -148,7 +148,7 @@ export async function POST(request: Request) {
   if (!body.sendNow) return Response.json({ campaign }, { status: 201 });
 
   const channel = campaign.channel as CampaignChannel;
-  const configuration = getMarketingConfiguration();
+  const configuration = await getMarketingConfiguration();
   const providerReady =
     channel === "email" ? configuration.email : configuration.whatsapp;
   if (!providerReady) {

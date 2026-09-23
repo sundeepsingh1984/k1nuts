@@ -88,16 +88,12 @@ function rupees(paise: number) {
 
 export function AccountDashboard({
   authenticatedUser,
+  initialTab,
 }: {
   authenticatedUser: { displayName: string; email: string };
+  initialTab: Tab;
 }) {
-  const [tab, setTab] = useState<Tab>(() => {
-    if (typeof window === "undefined") return "profile";
-    const requestedTab = new URLSearchParams(window.location.search).get("tab");
-    return requestedTab === "addresses" || requestedTab === "orders"
-      ? requestedTab
-      : "profile";
-  });
+  const [tab, setTab] = useState<Tab>(initialTab);
   const [data, setData] = useState<AccountData | null>(null);
   const [profile, setProfile] = useState({
     displayName: authenticatedUser.displayName,

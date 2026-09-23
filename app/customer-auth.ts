@@ -2,6 +2,7 @@ import { env } from "cloudflare:workers";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { getChatGPTUser } from "./chatgpt-auth";
+import { getIntegrationConfig } from "./integration-settings";
 
 const SESSION_COOKIE = "k1_customer_session";
 const SESSION_SECONDS = 60 * 60 * 24 * 30;
@@ -76,29 +77,31 @@ function authSecret() {
   return values().K1_AUTH_SECRET?.trim() || (isLocalDevelopment() ? LOCAL_AUTH_SECRET : "");
 }
 
-export function getCustomerAuthConfiguration() {
-  const runtime = values();
+export async function getCustomerAuthConfiguration() {
   const secretReady = Boolean(authSecret());
+  const [email, google] = await Promise.all([
+    getIntegrationConfig("email"),
+    getIntegrationConfig("google_login"),
+  ]);
   const emailProvider = Boolean(
-    runtime.RESEND_API_KEY?.trim() &&
-      (runtime.K1_AUTH_FROM_EMAIL?.trim() || runtime.MARKETING_FROM_EMAIL?.trim()),
+    email.apiKey?.trim() && (email.authFromEmail?.trim() || email.fromEmail?.trim()),
   );
   return {
     emailPasswordOtp: secretReady && (emailProvider || isLocalDevelopment()),
     google:
       secretReady &&
       Boolean(
-        runtime.GOOGLE_OAUTH_CLIENT_ID?.trim() &&
-          runtime.GOOGLE_OAUTH_CLIENT_SECRET?.trim(),
+        google.clientId?.trim() && google.clientSecret?.trim(),
       ),
     developmentOtp: isLocalDevelopment(),
   };
 }
 
-export function getGoogleOauthConfiguration(requestUrl: string) {
+export async function getGoogleOauthConfiguration(requestUrl: string) {
   const runtime = values();
-  const clientId = runtime.GOOGLE_OAUTH_CLIENT_ID?.trim();
-  const clientSecret = runtime.GOOGLE_OAUTH_CLIENT_SECRET?.trim();
+  const google = await getIntegrationConfig("google_login");
+  const clientId = google.clientId?.trim();
+  const clientSecret = google.clientSecret?.trim();
   const configuredOrigin = runtime.NEXT_PUBLIC_SITE_URL?.trim();
   const origin = configuredOrigin
     ? new URL(configuredOrigin).origin
@@ -166,13 +169,12 @@ export async function hashOtp(email: string, code: string) {
 }
 
 export async function sendEmailOtp(email: string, code: string, purpose: string) {
-  const runtime = values();
-  if (isLocalDevelopment() && !runtime.RESEND_API_KEY) {
+  const emailConfig = await getIntegrationConfig("email");
+  if (isLocalDevelopment() && !emailConfig.apiKey) {
     return { delivered: true, developmentCode: code };
   }
-  const apiKey = runtime.RESEND_API_KEY?.trim();
-  const from =
-    runtime.K1_AUTH_FROM_EMAIL?.trim() || runtime.MARKETING_FROM_EMAIL?.trim();
+  const apiKey = emailConfig.apiKey?.trim();
+  const from = emailConfig.authFromEmail?.trim() || emailConfig.fromEmail?.trim();
   if (!apiKey || !from) return { delivered: false, developmentCode: null };
   const response = await fetch("https://api.resend.com/emails", {
     method: "POST",

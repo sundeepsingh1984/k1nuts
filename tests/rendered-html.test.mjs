@@ -37,11 +37,12 @@ test("server-renders the production K1 storefront", async () => {
 });
 
 test("ships account, review and commerce data capabilities", async () => {
-  const [account, carousel, reviews, schema, storeData] = await Promise.all([
+  const [account, accountPage, carousel, reviews, schema, storeData] = await Promise.all([
     readFile(
       new URL("../app/account/account-dashboard.tsx", import.meta.url),
       "utf8",
     ),
+    readFile(new URL("../app/account/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/review-carousel.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/product-reviews.tsx", import.meta.url), "utf8"),
     readFile(new URL("../db/schema.ts", import.meta.url), "utf8"),
@@ -50,11 +51,29 @@ test("ships account, review and commerce data capabilities", async () => {
 
   assert.match(account, /Delivery addresses/);
   assert.match(account, /Orders & tracking/);
+  assert.match(account, /useState<Tab>\(initialTab\)/);
+  assert.doesNotMatch(account, /typeof window === "undefined"/);
+  assert.match(accountPage, /initialTab={initialTab}/);
+  assert.match(accountPage, /searchParams/);
   assert.match(carousel, /embla-carousel-react/);
   assert.match(reviews, /verified purchase/i);
   assert.match(schema, /productReviews/);
   assert.match(schema, /customerOrders/);
   assert.doesNotMatch(storeData, /catalogue\/[a-z0-9-]+\.png/);
+});
+
+test("keeps checkout state across sign-in without changing the hydration snapshot", async () => {
+  const storefront = await readFile(
+    new URL("../app/storefront-context.tsx", import.meta.url),
+    "utf8",
+  );
+  assert.match(storefront, /k1_storefront_cart_v1/);
+  assert.match(storefront, /if \(!cartReady\) return/);
+  assert.match(storefront, /window\.localStorage\.getItem/);
+  assert.match(storefront, /window\.localStorage\.setItem/);
+  assert.match(storefront, /current\.length \? current : valid/);
+  assert.match(storefront, /useState<CartLine\[\]>\(\[\]\)/);
+  assert.doesNotMatch(storefront, /useState<CartLine\[\]>\(\(\) =>/);
 });
 
 test("ships structured collections, variants and carrier integrations", async () => {
@@ -238,4 +257,34 @@ test("ships dynamic catalogue administration and two-factor customer authenticat
   assert.match(schema, /customerAccounts/);
   assert.match(schema, /emailOtpCodes/);
   assert.doesNotMatch(storefront, /signin-with-chatgpt/);
+});
+
+test("ships encrypted self-service integration administration", async () => {
+  const [dashboard, route, settings, shipping, marketing, reviews, schema, migration] =
+    await Promise.all([
+      readFile(new URL("../app/admin/dashboard.tsx", import.meta.url), "utf8"),
+      readFile(new URL("../app/api/admin/integrations/route.ts", import.meta.url), "utf8"),
+      readFile(new URL("../app/integration-settings.ts", import.meta.url), "utf8"),
+      readFile(new URL("../app/shipping.ts", import.meta.url), "utf8"),
+      readFile(new URL("../app/marketing.ts", import.meta.url), "utf8"),
+      readFile(new URL("../app/api/google-reviews/route.ts", import.meta.url), "utf8"),
+      readFile(new URL("../db/schema.ts", import.meta.url), "utf8"),
+      readFile(new URL("../drizzle/0007_overconfident_warlock.sql", import.meta.url), "utf8"),
+    ]);
+
+  assert.match(dashboard, /Connect services without touching code/);
+  assert.match(dashboard, /SAVE SETTINGS/);
+  assert.match(dashboard, /never returned to this browser/);
+  assert.match(route, /Authentication required/);
+  assert.match(route, /testShiprocketConnection/);
+  assert.match(route, /api\.razorpay\.com/);
+  assert.match(settings, /AES-GCM/);
+  assert.match(settings, /config_encrypted/);
+  assert.match(settings, /secretHints/);
+  assert.doesNotMatch(settings, /configEncrypted.*Response\.json/);
+  assert.match(shipping, /getIntegrationConfig\("shiprocket"\)/);
+  assert.match(marketing, /getIntegrationConfig\("email"\)/);
+  assert.match(reviews, /getIntegrationConfig\("google_reviews"\)/);
+  assert.match(schema, /integrationSettings/);
+  assert.match(migration, /integration_settings/);
 });

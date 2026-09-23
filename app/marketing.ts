@@ -1,4 +1,5 @@
 import { env } from "cloudflare:workers";
+import { getIntegrationConfig, getIntegrationFlags } from "./integration-settings";
 
 export type CampaignChannel = "email" | "whatsapp";
 
@@ -20,15 +21,12 @@ function runtimeEnv() {
   return env as unknown as Record<string, string | undefined>;
 }
 
-export function getMarketingConfiguration() {
+export async function getMarketingConfiguration() {
   const variables = runtimeEnv();
+  const flags = await getIntegrationFlags();
   return {
-    email: Boolean(
-      variables.RESEND_API_KEY && variables.MARKETING_FROM_EMAIL,
-    ),
-    whatsapp: Boolean(
-      variables.WHATSAPP_ACCESS_TOKEN && variables.WHATSAPP_PHONE_NUMBER_ID,
-    ),
+    email: flags.email,
+    whatsapp: flags.whatsapp,
     identity: {
       chatgpt: true,
       firebaseProjectConfigured: Boolean(
@@ -67,8 +65,8 @@ async function sendEmailCampaign(
   subject: string,
   message: string,
 ): Promise<DeliveryResult[]> {
-  const variables = runtimeEnv();
-  if (!variables.RESEND_API_KEY || !variables.MARKETING_FROM_EMAIL) {
+  const config = await getIntegrationConfig("email");
+  if (!config.apiKey || !config.fromEmail) {
     throw new Error("Email provider credentials are not configured.");
   }
   const results: DeliveryResult[] = [];
@@ -77,12 +75,12 @@ async function sendEmailCampaign(
     const response = await fetch("https://api.resend.com/emails/batch", {
       method: "POST",
       headers: {
-        authorization: `Bearer ${variables.RESEND_API_KEY}`,
+        authorization: `Bearer ${config.apiKey}`,
         "content-type": "application/json",
       },
       body: JSON.stringify(
         batch.map((recipient) => ({
-          from: variables.MARKETING_FROM_EMAIL,
+          from: config.fromEmail,
           to: [recipient.email],
           subject,
           html: campaignHtml(message, recipient.displayName),
@@ -127,15 +125,15 @@ async function sendWhatsAppOne(
   templateName: string,
   templateLanguage: string,
   message: string,
+  config: Record<string, string>,
 ): Promise<DeliveryResult> {
-  const variables = runtimeEnv();
-  const version = variables.WHATSAPP_GRAPH_VERSION || "v23.0";
+  const version = config.graphVersion || "v23.0";
   const response = await fetch(
-    `https://graph.facebook.com/${version}/${variables.WHATSAPP_PHONE_NUMBER_ID}/messages`,
+    `https://graph.facebook.com/${version}/${config.phoneNumberId}/messages`,
     {
       method: "POST",
       headers: {
-        authorization: `Bearer ${variables.WHATSAPP_ACCESS_TOKEN}`,
+        authorization: `Bearer ${config.accessToken}`,
         "content-type": "application/json",
       },
       body: JSON.stringify({
@@ -178,8 +176,8 @@ async function sendWhatsAppCampaign(
   templateLanguage: string,
   message: string,
 ) {
-  const variables = runtimeEnv();
-  if (!variables.WHATSAPP_ACCESS_TOKEN || !variables.WHATSAPP_PHONE_NUMBER_ID) {
+  const config = await getIntegrationConfig("whatsapp");
+  if (!config.accessToken || !config.phoneNumberId) {
     throw new Error("WhatsApp provider credentials are not configured.");
   }
   const results: DeliveryResult[] = [];
@@ -194,6 +192,7 @@ async function sendWhatsAppCampaign(
               templateName,
               templateLanguage,
               message,
+              config,
             ),
           ),
       )),

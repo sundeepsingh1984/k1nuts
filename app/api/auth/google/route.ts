@@ -5,7 +5,6 @@ import {
   getGoogleOauthConfiguration,
   normalizeEmail,
   safeReturnTo,
-  sha256Hex,
 } from "../../../customer-auth";
 
 export const dynamic = "force-dynamic";
@@ -29,7 +28,7 @@ function redirectWithError(request: Request, error: string) {
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
-  const configuration = getGoogleOauthConfiguration(request.url);
+  const configuration = await getGoogleOauthConfiguration(request.url);
   if (!configuration) return redirectWithError(request, "Google sign-in is awaiting configuration.");
   const code = url.searchParams.get("code");
   const returnedState = url.searchParams.get("state");

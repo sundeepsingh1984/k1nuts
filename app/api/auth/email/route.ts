@@ -78,7 +78,7 @@ export async function POST(request: Request) {
     return Response.json({ ok: true });
   }
 
-  if (!getCustomerAuthConfiguration().emailPasswordOtp) {
+  if (!(await getCustomerAuthConfiguration()).emailPasswordOtp) {
     return Response.json(
       { error: "Email sign-in is awaiting the K1 email provider configuration." },
       { status: 503 },

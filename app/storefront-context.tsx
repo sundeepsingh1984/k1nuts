@@ -14,6 +14,7 @@ import { trackStoreEvent } from "./analytics";
 import { formatInr, type StoreCategory, type StoreProduct } from "./store-data";
 
 type CartLine = { product: StoreProduct; quantity: number };
+const cartStorageKey = "k1_storefront_cart_v1";
 const cartLineId = (product: StoreProduct) =>
   `${product.slug}::${product.weight}`;
 type StoreContextValue = {
@@ -36,6 +37,7 @@ export function StorefrontProvider({
   categories: StoreCategory[];
 }) {
   const [cart, setCart] = useState<CartLine[]>([]);
+  const [cartReady, setCartReady] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
   const [signedIn, setSignedIn] = useState(false);
   const pathname = usePathname();
@@ -70,6 +72,46 @@ export function StorefrontProvider({
       .then((session) => setSignedIn(Boolean(session?.signedIn)))
       .catch(() => setSignedIn(false));
   }, []);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      try {
+        const stored = JSON.parse(
+          window.localStorage.getItem(cartStorageKey) || "[]",
+        ) as CartLine[];
+        const valid = Array.isArray(stored)
+          ? stored
+              .filter(
+                (line) =>
+                  line &&
+                  typeof line.quantity === "number" &&
+                  line.quantity > 0 &&
+                  line.product &&
+                  typeof line.product.slug === "string" &&
+                  typeof line.product.name === "string" &&
+                  typeof line.product.price === "number" &&
+                  typeof line.product.weight === "string",
+              )
+              .slice(0, 20)
+              .map((line) => ({
+                ...line,
+                quantity: Math.min(50, Math.floor(line.quantity)),
+              }))
+          : [];
+        setCart((current) => (current.length ? current : valid));
+      } catch {
+        window.localStorage.removeItem(cartStorageKey);
+      } finally {
+        setCartReady(true);
+      }
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    if (!cartReady) return;
+    window.localStorage.setItem(cartStorageKey, JSON.stringify(cart));
+  }, [cart, cartReady]);
 
   const add = useCallback(
     (product: StoreProduct) => {

@@ -1,4 +1,4 @@
-import { env } from "cloudflare:workers";
+import { getIntegrationConfig } from "../../integration-settings";
 import {
   fallbackReviews,
   googleMapsUrl,
@@ -74,15 +74,15 @@ export async function GET() {
     return Response.json(reviewCache.payload, { headers: responseHeaders });
   }
 
-  const runtimeEnv = env as unknown as Record<string, string | undefined>;
-  const apiKey = runtimeEnv.GOOGLE_PLACES_API_KEY?.trim();
+  const config = await getIntegrationConfig("google_reviews");
+  const apiKey = config.apiKey?.trim();
   if (!apiKey) {
     return Response.json(fallbackPayload(), { headers: responseHeaders });
   }
 
   try {
     const placeId =
-      runtimeEnv.GOOGLE_PLACE_ID?.trim() || (await findK1PlaceId(apiKey));
+      config.placeId?.trim() || (await findK1PlaceId(apiKey));
     if (!placeId) throw new Error("K1 Nuts place was not found");
 
     const details = await fetch(

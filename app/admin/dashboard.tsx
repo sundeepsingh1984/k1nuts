@@ -383,7 +383,6 @@ export default function AdminDashboard({
   }, []);
 
   useEffect(() => {
-    setRenderedAt(Date.now());
     fetch("/api/events")
       .then(async (response) => {
         if (!response.ok) throw new Error("Unable to load activity.");
@@ -737,7 +736,7 @@ function AdminModule({
       ) : tab === "returns" ? (
         <ReturnsTable data={data} />
       ) : tab === "integrations" ? (
-        <IntegrationPanel data={data} setToast={setToast} />
+        <IntegrationPanel reload={reload} setToast={setToast} />
       ) : tab === "campaigns" ? (
         <CampaignPanel
           data={campaignData}
@@ -2205,131 +2204,246 @@ function ReturnsTable({ data }: { data: DashboardData }) {
   );
 }
 
+type IntegrationProviderStatus = {
+  provider: string;
+  group: string;
+  name: string;
+  note: string;
+  testable: boolean;
+  configured: boolean;
+  source: "admin" | "environment" | "none";
+  values: Record<string, string>;
+  secretHints: Record<string, string>;
+  lastTestStatus: "passed" | "failed" | null;
+  lastTestMessage: string | null;
+  lastTestedAt: number | null;
+  fields: Array<{
+    key: string;
+    label: string;
+    type: "text" | "email" | "password" | "select";
+    required?: boolean;
+    placeholder?: string;
+    help?: string;
+    options?: Array<{ value: string; label: string }>;
+  }>;
+};
+
 function IntegrationPanel({
-  data,
+  reload,
   setToast,
 }: {
-  data: DashboardData;
+  reload: () => Promise<void>;
   setToast: (value: string) => void;
 }) {
-  async function test(provider: "shiprocket" | "amazon") {
-    if (!data.integrations[provider]) {
-      setToast(
-        `${provider === "shiprocket" ? "Shiprocket" : "Amazon"} credentials are required`,
-      );
-      return;
-    }
-    setToast("Testing secure connection…");
-    const response = await fetch("/api/admin/shipping", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ action: `test_${provider}` }),
-    });
-    const result = (await response.json()) as { error?: string };
-    setToast(
-      response.ok
-        ? `${provider} connection successful`
-        : result.error || "Connection failed",
-    );
+  const [providers, setProviders] = useState<IntegrationProviderStatus[]>([]);
+  const [selected, setSelected] = useState("");
+  const [draft, setDraft] = useState<Record<string, string>>({});
+  const [busy, setBusy] = useState("");
+
+  useEffect(() => {
+    let activeRequest = true;
+    fetch("/api/admin/integrations", { cache: "no-store" })
+      .then(async (response) => ({
+        ok: response.ok,
+        result: (await response.json()) as {
+          providers?: IntegrationProviderStatus[];
+          error?: string;
+        },
+      }))
+      .then(({ ok, result }) => {
+        if (!activeRequest) return;
+        if (ok) setProviders(result.providers || []);
+        else setToast(result.error || "Could not load integrations");
+      })
+      .catch(() => {
+        if (activeRequest) setToast("Could not load integrations");
+      });
+    return () => {
+      activeRequest = false;
+    };
+  }, [setToast]);
+
+  const active = providers.find((provider) => provider.provider === selected);
+  function openProvider(provider: IntegrationProviderStatus) {
+    setSelected(provider.provider);
+    setDraft({ ...provider.values });
   }
 
-  const cards: Array<{
-    key: "shiprocket" | "amazon" | "email" | "whatsapp";
-    type: string;
-    name: string;
-    note: string;
-  }> = [
-    {
-      key: "shiprocket",
-      type: "SHIPPING API",
-      name: "Shiprocket",
-      note: "Create external orders, assign AWBs and synchronize tracking.",
-    },
-    {
-      key: "amazon",
-      type: "SHIPPING API",
-      name: "Amazon Shipping",
-      note: "LWA authorization, Shipping V2 rates, purchase and tracking.",
-    },
-    {
-      key: "email",
-      type: "CAMPAIGN DELIVERY",
-      name: "Email · Resend",
-      note: "Server-side batch delivery to customers with saved email consent.",
-    },
-    {
-      key: "whatsapp",
-      type: "CAMPAIGN DELIVERY",
-      name: "WhatsApp Cloud API",
-      note: "Approved message templates for customers with channel-specific consent.",
-    },
-  ];
+  async function save(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!active) return;
+    setBusy("save");
+    const response = await fetch("/api/admin/integrations", {
+      method: "PUT",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ provider: active.provider, values: draft }),
+    });
+    const result = (await response.json()) as {
+      providers?: IntegrationProviderStatus[];
+      error?: string;
+    };
+    setBusy("");
+    if (!response.ok) {
+      setToast(result.error || "Could not save integration");
+      return;
+    }
+    setProviders(result.providers || []);
+    setDraft(
+      result.providers?.find((provider) => provider.provider === active.provider)
+        ?.values || {},
+    );
+    setToast(`${active.name} settings saved securely`);
+    await reload();
+  }
+
+  async function test() {
+    if (!active) return;
+    setBusy("test");
+    setToast(`Testing ${active.name}…`);
+    const response = await fetch("/api/admin/integrations", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ provider: active.provider }),
+    });
+    const result = (await response.json()) as {
+      providers?: IntegrationProviderStatus[];
+      message?: string;
+      error?: string;
+    };
+    setBusy("");
+    if (result.providers) setProviders(result.providers);
+    setToast(response.ok ? result.message || "Connection successful" : result.error || "Connection failed");
+  }
+
+  const configuredCount = providers.filter((provider) => provider.configured).length;
   return (
-    <div className="integrationWorkspace">
-      <div className="integrationGrid integrationGridPro">
-        {cards.map((card) => (
-          <article key={card.key}>
-            <div
-              className={`integrationState ${data.integrations[card.key] ? "ready" : ""}`}
-            >
-              <i />{" "}
-              {data.integrations[card.key]
-                ? "CREDENTIALS READY"
-                : "SETUP REQUIRED"}
-            </div>
-            <small>{card.type}</small>
-            <h3>{card.name}</h3>
-            <p>{card.note}</p>
-            <ul>
-              <li>Secrets remain server-side</li>
-              <li>Consent-aware customer selection</li>
-              <li>Provider outcomes remain visible to operations</li>
-            </ul>
-            <button
-              onClick={() =>
-                card.key === "shiprocket" || card.key === "amazon"
-                  ? test(card.key)
-                  : setToast(
-                      data.integrations[card.key]
-                        ? `${card.name} is ready for campaigns`
-                        : `${card.name} server credentials are required`,
-                    )
-              }
-            >
-              {data.integrations[card.key]
-                ? card.key === "shiprocket" || card.key === "amazon"
-                  ? "TEST CONNECTION"
-                  : "READY TO USE"
-                : "VIEW REQUIRED SETUP"}{" "}
-              →
-            </button>
-          </article>
-        ))}
-      </div>
-      <section className="identityIntegration">
+    <div className="integrationWorkspace integrationManager">
+      <section className="integrationSummary">
         <div>
-          <small>CUSTOMER IDENTITY</small>
-          <h3>Secure sign-in paths</h3>
+          <small>SECURE PROVIDER VAULT</small>
+          <h3>Connect services without touching code.</h3>
           <p>
-            Checkout and account data currently use the Sites platform&apos;s
-            secure ChatGPT identity. Google and mobile OTP need an external
-            identity tenant plus a public-site authentication path before they
-            can be activated safely.
+            Add or rotate credentials here. Secrets are encrypted in the database,
+            masked after saving and never returned to this browser.
           </p>
         </div>
-        <span className="ready">
-          <i /> CHATGPT SIGN-IN ACTIVE
-        </span>
-        <span
-          className={
-            data.integrations.identity.firebaseProjectConfigured ? "ready" : ""
-          }
-        >
-          <i /> GOOGLE + PHONE PROVIDER{" "}
-          {data.integrations.identity.firebaseProjectConfigured
-            ? "CONFIGURED · ACTIVATION PENDING"
-            : "SETUP REQUIRED"}
-        </span>
+        <b>{configuredCount}<span> / {providers.length} ready</span></b>
+      </section>
+
+      <div className="integrationManagerGrid">
+        <div className="integrationProviderList">
+          {providers.map((provider) => (
+            <button
+              className={selected === provider.provider ? "active" : ""}
+              key={provider.provider}
+              onClick={() => openProvider(provider)}
+              type="button"
+            >
+              <span className={`integrationDot ${provider.configured ? "ready" : ""}`} />
+              <span>
+                <small>{provider.group}</small>
+                <b>{provider.name}</b>
+                <em>
+                  {provider.configured
+                    ? provider.source === "admin" ? "ADMIN MANAGED" : "ENVIRONMENT MANAGED"
+                    : "SETUP REQUIRED"}
+                </em>
+              </span>
+              <i>→</i>
+            </button>
+          ))}
+        </div>
+
+        {active ? (
+          <form className="integrationEditor" onSubmit={save}>
+            <header>
+              <div>
+                <small>{active.group} INTEGRATION</small>
+                <h3>{active.name}</h3>
+                <p>{active.note}</p>
+              </div>
+              <span className={active.configured ? "ready" : ""}>
+                <i /> {active.configured ? "READY" : "INCOMPLETE"}
+              </span>
+            </header>
+            <div className="integrationFormGrid">
+              {active.fields.map((field) => (
+                <label key={field.key}>
+                  <span>
+                    {field.label} {field.required && <em>Required</em>}
+                  </span>
+                  {field.type === "select" ? (
+                    <select
+                      value={draft[field.key] || ""}
+                      onChange={(event) => setDraft((current) => ({ ...current, [field.key]: event.target.value }))}
+                    >
+                      <option value="">Choose…</option>
+                      {field.options?.map((option) => (
+                        <option value={option.value} key={option.value}>{option.label}</option>
+                      ))}
+                    </select>
+                  ) : (
+                    <input
+                      type={field.type}
+                      value={draft[field.key] || ""}
+                      placeholder={
+                        field.type === "password" && active.secretHints[field.key]
+                          ? `Saved ${active.secretHints[field.key]} · leave blank to keep`
+                          : field.placeholder || ""
+                      }
+                      autoComplete="off"
+                      onChange={(event) => setDraft((current) => ({ ...current, [field.key]: event.target.value }))}
+                    />
+                  )}
+                  {(field.help || (field.type === "password" && active.secretHints[field.key])) && (
+                    <small>{field.help || `A saved credential ending ${active.secretHints[field.key]} is active.`}</small>
+                  )}
+                </label>
+              ))}
+            </div>
+            {active.lastTestMessage && (
+              <p className={`integrationTestResult ${active.lastTestStatus || ""}`}>
+                <b>{active.lastTestStatus === "passed" ? "LAST TEST PASSED" : "LAST TEST FAILED"}</b>
+                {active.lastTestMessage}
+                {active.lastTestedAt && <span>{new Date(active.lastTestedAt).toLocaleString()}</span>}
+              </p>
+            )}
+            <footer>
+              <p>
+                Existing environment variables remain a fallback. Saving here makes
+                this provider admin-managed.
+              </p>
+              {active.testable && (
+                <button type="button" disabled={!active.configured || Boolean(busy)} onClick={() => void test()}>
+                  {busy === "test" ? "TESTING…" : "TEST CONNECTION"}
+                </button>
+              )}
+              <button className="adminPrimary" type="submit" disabled={Boolean(busy)}>
+                {busy === "save" ? "SAVING…" : "SAVE SETTINGS"}
+              </button>
+            </footer>
+          </form>
+        ) : (
+          <section className="integrationEmpty">
+            <span>↗</span>
+            <h3>Choose an integration</h3>
+            <p>Select a provider to view its required fields and connection status.</p>
+          </section>
+        )}
+      </div>
+
+      <section className="identityIntegration integrationNotice">
+        <div>
+          <small>ACTIVATION NOTE</small>
+          <h3>Credentials are only one part of go-live.</h3>
+          <p>
+            Payment webhooks, OAuth redirect URLs and WhatsApp templates must also be
+            approved in each provider console. K1 keeps checkout inactive until those
+            callbacks are verified, preventing accidental live charges.
+          </p>
+        </div>
+        <span className="ready"><i /> ENCRYPTED AT REST</span>
+        <span className="ready"><i /> MASKED IN ADMIN</span>
       </section>
     </div>
   );

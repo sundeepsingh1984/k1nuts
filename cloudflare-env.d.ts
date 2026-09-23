@@ -9,6 +9,12 @@ interface K1RuntimeBindings {
   GOOGLE_OAUTH_CLIENT_ID?: string;
   GOOGLE_OAUTH_CLIENT_SECRET?: string;
   K1_AUTH_FROM_EMAIL?: string;
+  RESEND_API_KEY?: string;
+  MARKETING_FROM_EMAIL?: string;
+  MARKETING_BATCH_LIMIT?: string;
+  WHATSAPP_ACCESS_TOKEN?: string;
+  WHATSAPP_PHONE_NUMBER_ID?: string;
+  WHATSAPP_GRAPH_VERSION?: string;
   SHIPROCKET_EMAIL?: string;
   SHIPROCKET_PASSWORD?: string;
   SHIPROCKET_PICKUP_LOCATION?: string;
@@ -24,6 +30,13 @@ interface K1RuntimeBindings {
   AMAZON_LWA_REFRESH_TOKEN?: string;
   AMAZON_SP_API_ENDPOINT?: string;
   AMAZON_SHIPPING_BUSINESS_ID?: string;
+  RAZORPAY_KEY_ID?: string;
+  RAZORPAY_KEY_SECRET?: string;
+  RAZORPAY_WEBHOOK_SECRET?: string;
+  PHONEPE_MERCHANT_ID?: string;
+  PHONEPE_CLIENT_ID?: string;
+  PHONEPE_CLIENT_SECRET?: string;
+  PHONEPE_ENVIRONMENT?: string;
 }
 
 declare global {

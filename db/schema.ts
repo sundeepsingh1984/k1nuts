@@ -563,3 +563,21 @@ export const customerOauthAccounts = sqliteTable(
     index("idx_customer_oauth_user").on(table.userId),
   ],
 );
+
+export const integrationSettings = sqliteTable(
+  "integration_settings",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    provider: text("provider").notNull(),
+    configEncrypted: text("config_encrypted").notNull(),
+    enabled: integer("enabled", { mode: "boolean" }).notNull().default(true),
+    lastTestStatus: text("last_test_status"),
+    lastTestMessage: text("last_test_message"),
+    lastTestedAt: integer("last_tested_at"),
+    createdAt: integer("created_at").notNull(),
+    updatedAt: integer("updated_at").notNull(),
+  },
+  (table) => [
+    uniqueIndex("idx_integration_settings_provider").on(table.provider),
+  ],
+);

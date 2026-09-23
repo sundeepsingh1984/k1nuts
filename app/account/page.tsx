@@ -5,10 +5,13 @@ import { AccountDashboard } from "./account-dashboard";
 
 export const dynamic = "force-dynamic";
 
-async function ProtectedAccount() {
+type AccountTab = "profile" | "addresses" | "orders";
+
+async function ProtectedAccount({ initialTab }: { initialTab: AccountTab }) {
   const user = await requireCustomerUser("/account");
   return (
     <AccountDashboard
+      initialTab={initialTab}
       authenticatedUser={{
         displayName: user.displayName,
         email: user.email,
@@ -17,7 +20,16 @@ async function ProtectedAccount() {
   );
 }
 
-export default function AccountPage() {
+export default async function AccountPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ tab?: string }>;
+}) {
+  const requestedTab = (await searchParams).tab;
+  const initialTab: AccountTab =
+    requestedTab === "addresses" || requestedTab === "orders"
+      ? requestedTab
+      : "profile";
   return (
     <main className="brandSite accountPage">
       <StoreHeader />
@@ -29,7 +41,7 @@ export default function AccountPage() {
           </section>
         }
       >
-        <ProtectedAccount />
+        <ProtectedAccount initialTab={initialTab} />
       </Suspense>
       <StoreFooter />
     </main>
