@@ -1,0 +1,8 @@
+#:schema node_modules/wrangler/config-schema.json
+name = "k1nuts"
+compatibility_date = "2024-04-03"
+
+[[d1_databases]]
+binding = "DB" # The variable name you'll use in your code
+database_name = "k1nuts-production"
+database_id = "248f1e87-66f4-480f-a00e-2935edae0238"
