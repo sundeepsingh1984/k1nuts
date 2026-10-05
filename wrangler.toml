@@ -1,9 +1,11 @@
 #:schema node_modules/wrangler/config-schema.json
+
 name = "k1nuts"
+main = "./worker/index.ts"
 compatibility_date = "2026-10-05"
 
 [[d1_databases]]
-binding = "DB" # The variable name you'll use in your code
+binding = "DB"
 database_name = "k1nuts-production"
 database_id = "248f1e87-66f4-480f-a00e-2935edae0238"
-migrations_dir ="./drizzle"
+migrations_dir = "./drizzle"
