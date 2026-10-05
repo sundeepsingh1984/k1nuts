@@ -1,6 +1,6 @@
 #:schema node_modules/wrangler/config-schema.json
 name = "k1nuts"
-compatibility_date = "2024-04-03"
+compatibility_date = "2026-10-05"
 
 [[d1_databases]]
 binding = "DB" # The variable name you'll use in your code
